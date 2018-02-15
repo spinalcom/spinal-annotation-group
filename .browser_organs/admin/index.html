@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<!--[if IE 8]> <html lang="en" class="ie8"> <![endif]-->
+<!--[if !IE]><!-->
+<html lang="en">
+<!--<![endif]-->
+
+<head>
+  <meta charset="utf-8" />
+  <title>Spinal Admin Dashboard | Tree View</title>
+  <meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+  <meta content="" name="description" />
+  <meta content="" name="author" />
+
+  <!-- ================== BEGIN BASE CSS STYLE ================== -->
+  <!-- <link href="http://fonts.googleapis.com/css?family=Open+Sans:300,400,600,700" rel="stylesheet"> -->
+  <link href="assets/plugins/jquery-ui/themes/base/minified/jquery-ui.min.css" rel="stylesheet" />
+  <link href="assets/plugins/bootstrap/css/bootstrap.min.css" rel="stylesheet" />
+  <link href="assets/plugins/font-awesome/css/font-awesome.min.css" rel="stylesheet" />
+  <link href="assets/css/animate.min.css" rel="stylesheet" />
+  <link href="assets/css/style.min.css" rel="stylesheet" />
+  <link href="assets/css/style-responsive.min.css" rel="stylesheet" />
+  <link href="assets/css/theme/default.css" rel="stylesheet" id="theme" />
+  <link href="assets/css/theme/blue.css" rel="stylesheet" id="theme" />
+  <!-- ================== END BASE CSS STYLE ================== -->
+
+  <!-- ================== BEGIN PAGE LEVEL JS ================== -->
+  <link href="assets/plugins/jstree/dist/themes/default/style.min.css" rel="stylesheet" />
+  <link href="assets/plugins/gritter/css/jquery.gritter.css" rel="stylesheet" />
+  <link href="SpinalAdmin/admin.stylesheets.css" rel="stylesheet" id="theme" />
+  <link href="assets/bower_components/d3-context-menu/css/d3-context-menu.css" rel="stylesheet" id="theme" />
+  <!-- ================== END PAGE LEVEL JS ================== -->
+
+  <!-- ================== BEGIN BASE JS ================== -->
+  <!--         <script src="assets/plugins/pace/pace.min.js"></script> -->
+  <!-- ================== END BASE JS ================== -->
+</head>
+
+<body>
+  <!-- begin #page-loader -->
+  <div id="page-loader" class="fade in">
+    <span class="spinner"></span>
+  </div>
+  <!-- end #page-loader -->
+
+  <!-- begin #page-container -->
+  <!--         <div id="page-container" class="fade page-header-fixed page-sidebar-fixed page-with-light-sidebar page-with-two-sidebar"> -->
+  <div id="page-container" class="fade page-sidebar-fixed page-header-fixed">
+    <div id="header" class="header navbar navbar-default navbar-fixed-top">
+      <div class="container-fluid">
+        <div class="navbar-header">
+          <a href="#" class="navbar-brand" style="padding: 5px;">
+            <img src="assets/img/logo_medium.png" alt="SpinalCom" style="height: 42px;">
+          </a>
+        </div>
+        <dir>
+          <h1 class="page-header">
+            <span id="span-username"></span>
+          </h1>
+          <button type="button" class="btn btn-danger" style="right: 20px;top: 13px;position: absolute;" onclick="admin.disconnect()">
+            <i class="fa fa-sign-out"></i>
+            Disconnect
+          </button>
+          <!-- <button type="button" name="button">disconnect</button> -->
+        </dir>
+      </div>
+    </div>
+
+    <!-- begin #sidebar -->
+    <div id="sidebar" class="sidebar" style="background:#1a2229;">
+      <div>
+        <ul class="nav">
+          <li class="has-sub active">
+            <a href="javascript:;">
+              <b class="caret pull-right"></b>
+              <i class="fa fa-laptop"></i>
+              <span>Navigation</span>
+            </a>
+            <ul class="sub-menu">
+              <li class="active">
+                <a href="admin-dashboard.html">Database</a>
+              </li>
+            </ul>
+          </li>
+        </ul>
+        <ul class="nav">
+          <li class="nav-profile">
+            <hr style="padding-top: 10px; padding-bottom: 10px;" />
+            <button type="button" class="btn btn-primary btn-block" id="btn_garbage_collector">
+              <i class="fa fa-trash-o"></i>
+              Garbage Collector
+            </button>
+          </li>
+          <li class="nav-profile">
+            <button type="button" class="btn btn-primary btn-block" id="btn_backup">
+              <i class="fa fa-archive"></i>
+              Back Up
+            </button>
+          </li>
+          <li class="nav-profile separator-nav">
+            <hr/>
+          </li>
+          <li class="nav-profile">
+            <h4 class="moduleapp-title">Application List</h4>
+            <div class="col-xs-12 app-container" id="app-module-list"></div>
+          </li>
+        </ul>
+      </div>
+    </div>
+    <div class="sidebar-bg" style="background:#1a2229;"></div>
+    <!-- end #sidebar -->
+
+    <!-- begin #content -->
+    <div id="content" class="content ">
+      <!--   <ol class="breadcrumb pull-right">
+          <li>
+            <a href="javascript:;">Home</a>
+          </li>
+          <li class="active">Dashboard</li>
+        </ol>
+        <h1 class="page-header"><span id="span-username"></span></h1> -->
+
+      <div class="row">
+
+        <div class="col-md-3">
+          <div class="panel panel-inverse">
+            <div class="panel-heading">
+              <div class="panel-heading-btn">
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+                  <i class="fa fa-expand"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse">
+                  <i class="fa fa-minus"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove">
+                  <i class="fa fa-times"></i>
+                </a>
+              </div>
+              <h4 class="panel-title">File System</h4>
+            </div>
+            <div class="panel-body" style="overflow: auto">
+              <div style="height: 600px;">
+                <div id="jstree2-ajax"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-9">
+          <div class="panel panel-inverse">
+            <div class="panel-heading">
+              <div class="panel-heading-btn">
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+                  <i class="fa fa-expand"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse">
+                  <i class="fa fa-minus"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove">
+                  <i class="fa fa-times"></i>
+                </a>
+              </div>
+              <h4 class="panel-title">File content</h4>
+            </div>
+            <div class="panel-body">
+              <div id="file-content" class="svg-container">
+                <div class="btn-group" role="group" style="position: absolute; z-index:99;">
+                  <button type="button" class="btn btn-primary" id="tree_center_root">Center Root</button>
+                  <button type="button" class="btn btn-primary" id="tree_zoom_root">Full</button>
+                </div>
+                <div class="input-group" style="position: absolute; z-index:99; width:300px; right:5px;">
+                  <input type="text" class="form-control search_input" placeholder="Search" id="search_tree_input">
+                  <div class="input-group-btn">
+                    <span type="button" class="btn btn-info" id="search_tree_res">0/0</span>
+                    <button type="button" class="btn btn-primary" id="search_tree_prev">&lt;</button>
+                    <button type="button" class="btn btn-primary" id="search_tree_next">&gt;</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-md-12">
+          <div class="panel panel-inverse">
+            <div class="panel-heading">
+              <div class="panel-heading-btn">
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+                  <i class="fa fa-expand"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse">
+                  <i class="fa fa-minus"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove">
+                  <i class="fa fa-times"></i>
+                </a>
+              </div>
+              <h4 class="panel-title">User Manager</h4>
+            </div>
+            <div class="panel-body">
+              <div>
+                <h4>User List</h4>
+                <div style="overflow: auto">
+                  <table class="table">
+                    <thead>
+                      <tr>
+                        <th style="width:10px; padding:10px 0px;"></th>
+                        <th>Id</th>
+                        <th>User</th>
+                        <!-- <th>Password</th>
+                          <th>State</th> -->
+                        <th>Home</th>
+                        <!-- <th>Type</th> -->
+                      </tr>
+                    </thead>
+                    <tbody id="user_list"></tbody>
+                  </table>
+                </div>
+                <br/>
+                <!-- <div class="input-group"> -->
+                <form action="javascript:usermanager_view.add();" class="input-group">
+                  <h4>New User</h4>
+
+                  <input id="input_user" type="text" class="form-control" placeholder="User">
+                  <input id="input_password" type="text" class="form-control" placeholder="Password">
+                  <button id="btn_push_user" class="btn btn-success">add</button>
+                </form>
+                <!-- </div> -->
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- <div class="col-md-12">
+                <div class="panel panel-inverse">
+                    <div class="panel-heading">
+                        <div class="panel-heading-btn">
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand"><i class="fa fa-expand"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse"><i class="fa fa-minus"></i></a>
+                            <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove"><i class="fa fa-times"></i></a>
+                        </div>
+                        <h4 class="panel-title">TEST it</h4>
+                    </div>
+                    <div class="panel-body">
+                    </div>
+                </div>
+                </div> -->
+
+        <div class="col-md-12">
+          <div class="panel panel-inverse ">
+            <div class="panel-heading">
+              <div class="panel-heading-btn">
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-default" data-click="panel-expand">
+                  <i class="fa fa-expand"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-warning" data-click="panel-collapse">
+                  <i class="fa fa-minus"></i>
+                </a>
+                <a href="javascript:;" class="btn btn-xs btn-icon btn-circle btn-danger" data-click="panel-remove">
+                  <i class="fa fa-times"></i>
+                </a>
+              </div>
+              <h4 class="panel-title">Stats</h4>
+            </div>
+            <div class="panel-body">
+              <table class="table">
+                <col width="10%">
+                <col width="10%">
+                <col width="80%">
+                <thead>
+                  <tr>
+                    <th>Label</th>
+                    <th>Value</th>
+                    <th>Trend</th>
+                  </tr>
+                </thead>
+                <tbody id="admin_details"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- end #content -->
+
+    <!-- begin scroll to top btn -->
+    <a href="javascript:;" class="btn btn-icon btn-circle btn-success btn-scroll-to-top fade" data-click="scroll-top">
+      <i class="fa fa-angle-up"></i>
+    </a>
+    <!-- end scroll to top btn -->
+  </div>
+  <!-- end page container -->
+  <div class="modal fade" id="modal-share" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">Sharing settings</h4>
+        </div>
+        <div class="modal-body">
+          <form>
+            <h5>Target user:</h5>
+            <div class="form-group">
+              <input type="text" class="form-control" id="modal-share-target">
+            </div>
+            <h5>Name shown in Target user folder:</h5>
+            <div class="form-group">
+              <input type="text" class="form-control" id="modal-share-file">
+            </div>
+
+            <h5>Right Recap:</h5>
+            <table class="table">
+              <col width="10%">
+              <col width="55%">
+              <col width="10%">
+              <col width="10%">
+              <col width="10%">
+              <thead>
+                <tr>
+                  <th>Id</th>
+                  <th>User</th>
+                  <th>Read</th>
+                  <th>Write</th>
+                  <th>Admin</th>
+                </tr>
+              </thead>
+              <tbody id="modal-share-rightsItem"></tbody>
+            </table>
+            <br/>
+
+            <h5>Sharing Type:</h5>
+            <div class="block">
+              <label for="modal-share-read" class="control-label label-modal">Read :</label>
+              <input id="modal-share-read" data-group-cls="btn-group-sm" type="checkbox" data-switch-always/>
+            </div>
+            <div class="block">
+              <label for="modal-share-write" class="control-label label-modal">Write :</label>
+              <input id="modal-share-write" data-group-cls="btn-group-sm" type="checkbox" data-switch-always/>
+            </div>
+            <div class="block">
+              <label for="modal-share-share" class="control-label label-modal">Share :</label>
+              <input id="modal-share-share" data-group-cls="btn-group-sm" type="checkbox" data-switch-always/>
+            </div>
+          </form>
+          <h5 id="modal-share-error" class="btn-warning"></h5>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="mnm.modal_share.send_share()">Validate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal fade" id="modal-new" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel">
+    <div class="modal-dialog" role="document">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+          <h4 class="modal-title">New...</h4>
+        </div>
+        <div class="modal-body modal-new-cont">
+          <div class="row modal-new-head">
+            <div class="modal-new-head-div mx-auto">
+              <button id="modal-new-head-folder" type="button" class="btn btn-primary modal-new-head-btn">New Folder</button>
+            </div>
+            <div class="modal-new-head-div mx-auto">
+              <button id="modal-new-head-project" type="button" class="btn btn-primary modal-new-head-btn">New Project Session</button>
+            </div>
+            <div class="modal-new-head-div mx-auto">
+              <button id="modal-new-head-upload" type="button" class="btn btn-primary modal-new-head-btn">Upload Files</button>
+            </div>
+          </div>
+          <hr/>
+          <div id="modal-new-content"></div>
+
+          <h5 id="modal-share-error" class="btn-warning"></h5>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+          <button type="button" class="btn btn-primary" onclick="mnm.modal_new.validate()">Validate</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================== BEGIN BASE JS ================== -->
+  <script src="assets/plugins/jquery/jquery-1.9.1.min.js"></script>
+  <script src="assets/plugins/jquery-ui/ui/minified/jquery-ui.min.js"></script>
+  <script src="assets/plugins/bootstrap/js/bootstrap.min.js"></script>
+  <!--[if lt IE 9]> <script src="assets/crossbrowserjs/html5shiv.js"></script> <script src="assets/crossbrowserjs/respond.min.js"></script> <script src="assets/crossbrowserjs/excanvas.min.js"></script> <![endif]-->
+  <script src="assets/plugins/slimscroll/jquery.slimscroll.min.js"></script>
+  <script src="assets/plugins/gritter/js/jquery.gritter.min.js"></script>
+  <script src="assets/plugins/bootstrap-checkbox/dist/js/bootstrap-checkbox.min.js"></script>
+  <script src="assets/plugins/spin/spin.min.js"></script>
+  <script src="assets/plugins/spin/jquery.spin.js"></script>
+  <!-- ================== END BASE JS ================== -->
+
+  <!-- ================== BEGIN PAGE LEVEL JS ================== -->
+  <!-- D3.js library -->
+  <script src="assets/bower_components/d3/d3.min.js"></script>
+  <script src="assets/bower_components/d3-context-menu/js/d3-context-menu.js"></script>
+
+  <script src="assets/plugins/jstree/dist/jstree.min.js"></script>
+  <script src="assets/js/apps.min.js"></script>
+  <script src="assets/plugins/sparkline/jquery.sparkline.js"></script>
+  <script src="../lib/spinalcore.browser.js"></script>
+  <script src="SpinalAdmin/admin.models.js"></script>
+  <script src="SpinalAdmin/admin.views.js"></script>
+  <script src="dashboard.js"></script>
+  <script src="config.js"></script>
+
+  <!-- is-sim utils -->
+  <!-- <script src="utility_is-sim/config.js"></script> -->
+  <!-- <script src="libJS/js.cookie.js"></script> -->
+
+  <!-- models / processes -->
+  <script src="js-libraries/all.is-sim.js"></script>
+  <script src="js-libraries/all.models.js"></script>
+  <script src="js-libraries/all.processes.js"></script>
+
+  <!-- ================== END PAGE LEVEL JS ================== -->
+
+  <script>
+    $(document).ready(function () {
+      App.init();
+      admin.launch_organ();
+      $(':checkbox').checkboxpicker();
+    });
+  </script>
+</body>
+
+</html>

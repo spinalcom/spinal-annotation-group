@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en" style="background-color: #292929;overflow: hidden;">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no" />
+  <base href="/html/viewer-annotations/">
+
+  <link rel="stylesheet" href="https://developer.api.autodesk.com/viewingservice/v1/viewers/style.min.css?v=v2.14" type="text/css">
+
+  <link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.css">
+
+  <link href="css/css.compile.css" rel="stylesheet" type="text/css" />
+
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/css/bootstrap.min.css" integrity="sha384-PsH8R72JQ3SOdhVi3uxftmaW6Vc51MKb0q5P2rRUpPvrszuE4W1povHYgTpBfshb"
+    crossorigin="anonymous">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    
+
+  <link rel="stylesheet" href="assets/lib/spectrum.css" />
+  <link href="assets/style.css" rel="stylesheet" type="text/css" />
+
+  <title>Share Viewer</title>
+</head>
+
+<body>
+  <div ng-app="SpinalApp" style="height: 100%;">
+    <navbar></navbar>
+    <ng-view></ng-view>
+  </div>
+
+
+  <script src="https://use.fontawesome.com/cc8bebc229.js"></script>
+  <script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/three.min.js?v=v2.14"></script>
+  <script src="https://developer.api.autodesk.com/viewingservice/v1/viewers/viewer3D.min.js?v=v2.14"></script>
+
+
+  <script src="https://code.jquery.com/jquery-3.2.1.min.js" integrity="sha256-hwg4gsxgFZhOsEEamdOYGBf13FyQuiTwlAQgxVSNgt4="
+    crossorigin="anonymous"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.3/umd/popper.min.js" integrity="sha384-vFJXuSJphROIrBnz7yo7oB41mKfc8JzQZiCq4NCceLEaO4IHwicKwpJf9c9IpFgh"
+    crossorigin="anonymous"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0-beta.2/js/bootstrap.min.js" integrity="sha384-alpBpkh1PFOepccYVYDB4do5UnbKysX5WZXm3XxPqe5iKTfUKjNkCk9SaVuEZflJ"
+    crossorigin="anonymous"></script>
+
+
+  <script src="../lib/spinalcore.browser.js"></script>
+  <script type="text/javascript" src="js/lib.compile.min.js"></script>
+
+  <script type="text/javascript" src="js/browser.forgefile.js"></script>
+
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/spectrum/1.8.0/spectrum.min.js"></script>
+  <!-- <script src="bower_components/angular-spectrum-colorpicker/dist/angular-spectrum-colorpicker.js"></script> -->
+  <script type="text/javascript" src="assets/lib/Autodesk.ADN.Viewing.Extension.Color.js"></script>
+  <script type="text/javascript" src="assets/lib/panelClass.js"></script>
+  <script type="text/javascript" src="assets/lib/spectrum.js"></script>
+  <script type="text/javascript" src="assets/lib/dropzone.js"></script>
+
+  <!-- <script type="text/javascript" src="assets/lib/panelExtension.js"></script> -->
+  <!-- <script type="text/javascript" src="assets/lib/index.js"></script> -->
+
+  <script src="js/app.compile.min.js"></script>
+  <!-- <script src="js/spinaldrive-lib.js"></script> -->
+</body>
+
+</html>

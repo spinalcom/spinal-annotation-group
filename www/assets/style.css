@@ -1,0 +1,26 @@
+
+
+
+body {
+    margin: 0;
+    padding-bottom: 20px !important;
+}
+
+.themes {
+    height: 50vh;
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+#MyViewerDiv {
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    background-color: #F0F8FF;
+}
+
+
+.md-primary {
+    width: 96% !important;
+}
+
