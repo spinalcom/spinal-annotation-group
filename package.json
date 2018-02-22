@@ -28,8 +28,22 @@
     "windowify": "^0.3.0"
   },
   "scripts": {
-    "models": "browserify ../spinal-lib-forgefile/forgefile.js -o www/js/browser.forgefile.js -t [ babelify --presets [ es2015 ] ] -g windowify -g uglifyify",
     "postinstall": "npm run spinal-register",
-    "spinal-register": "spinal-register"
+    "spinal-register": "spinal-register",
+    "compile": "node compile_js.js"
+  },
+  "devDependencies": {
+    "exorcist": "^1.0.1",
+    "babel-cli": "^6.26.0",
+    "babel-core": "^6.26.0",
+    "babel-plugin-transform-es2015-classes": "^6.24.1",
+    "babel-preset-es2015": "^6.24.1",
+    "babelify": "^8.0.0",
+    "bower": "^1.8.2",
+    "browserify": "^14.5.0",
+    "commander": "^2.13.0",
+    "uglifyify": "^4.0.5",
+    "windowify": "^0.3.0",
+    "csso": "^3.4.0"
   }
 }
