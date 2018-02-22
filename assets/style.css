@@ -33,8 +33,7 @@ body {
 
 .md-list-item-text {
     width: 100%;
-    height: 200px;
-    border: 1px solid red;
+    min-height: 80px;
     display: none;
     padding-left: 20px;
 }
@@ -47,3 +46,123 @@ body {
     background: #3A3A3A;
     border: 0px;
 }
+
+
+/* ------------------------------- Message Panel --------------------------- */
+
+.messageContainer {
+    width: 100%;
+    height: 79%;
+    margin-bottom: 10px;
+    border: 1px solid #F0F8FF;
+    overflow: scroll;
+}
+
+.form_div {
+    width: 100%;
+    height: 14%;
+
+}
+
+.textarea_div {
+    margin-bottom: 5px;
+}
+
+.content {
+    width: 100%;
+    height: 100%;
+}
+
+.message_div {
+    width : 100%;
+    min-height: 80px;
+    margin-bottom: 10px !important;
+}
+
+._message {
+    width : 100%;
+    min-height: 60px;
+    overflow: auto;
+}
+
+
+.message_date {
+    width: 100%;
+    text-align: right;
+    height: 20px;
+    color : #7E8282;
+}
+
+.message_owner {
+    width: 15%;
+    height: 40px;
+    float: left;
+}
+
+.message_content {
+    width: 80%;
+    min-height: 60px;
+    float: right;
+    background: #7e8282;
+    padding: 5px;
+}
+
+.message_texte {
+    width : 100%;
+    min-height: 50px;
+    text-align: justify;
+    color : black;
+}
+
+.close_div {
+    width: 100%;
+    height: 30px;
+    text-align: right;
+    color: #fff;
+}
+
+/* -------------------------------------------- File Panel  --------------------------------------*/
+
+.file_panel_content {
+    width: 100%;
+    height: 100%;
+}
+
+.dragDrop {
+    width: 100%;
+    height: 100px;
+}
+
+.files_div {
+    width: 100%;
+    height: 455px;
+    overflow-x: hidden;
+    overflow-x: auto;
+}
+
+
+.modal-new-dropzone-input {
+    position: fixed;
+    top: -1000;
+    width: 0.1px;
+    height: 0.1px;
+    opacity: 0;
+    overflow: scroll;
+    ;
+    position: absolute;
+    z-index: -1;
+}
+
+.modal-new-dropzone-input+label {
+    cursor: pointer;
+    font-size: 1.25em;
+    font-weight: 700;
+    color: white;
+    display: inline-block;
+    height: 100px;
+    width: 100%;
+    outline: 2px dashed white;
+    vertical-align: middle;
+    float: none;
+}
+

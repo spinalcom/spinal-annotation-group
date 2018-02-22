@@ -11,11 +11,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         this.panel = null;
         this.user = authService.get_user();
         this.messagePanel;
-
-        // $rootScope.focus_input = function() {
-        //   var input = document.getElementById("_input");
-        //   input.focus();
-        // }
+        this.filePanel;
 
         $rootScope.exec_function = (name,param1 = null,param2 = null,param3 = null) => {
           switch (name) {
@@ -53,6 +49,14 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
             case "info":
               this.viewMessagePanel(param1,param2);
+              break;
+            
+            case "file":
+              this.viewFilePanel(param1,param2);
+              break;
+            
+            case "seeAll" :
+              this.viewOrHideAllItem(param1);
               break;
   
             
@@ -142,7 +146,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
       }
 
       func_success(data,parent) {
-        //this.messagePanel = new MessagePanel(this.viewer,this.model,this.user);
+        this.messagePanel = new MessagePanel(this.viewer,this.model,this.user);
+        this.filePanel = new FilesPanel(this.viewer,this.model,this.user);
         var container = angular.element('<div class="_container"></div>');
         var addGroup = angular.element(`<md-button class="md-raised md-primary block" ng-click="exec_function('createTheme')">Create a group</md-button>`);
 
@@ -174,7 +179,6 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       }
 
-
       displayAnnotation(id) {
 
         var notes = this.model;
@@ -205,7 +209,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
                 <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' theme='${selected.id.get()}' name='${note.id.get()}'/>
 
-                <md-button class="i_btn show${note.id.get()}" id=${note.id.get()} aria-label="view" ng-click="exec_function('view','${selected.id.get()}','${note.id.get()}')" show="false">
+                <md-button class="i_btn show${note.id.get()}" id='e_${note.id.get()}' aria-label="view" ng-click="exec_function('view','${selected.id.get()}','${note.id.get()}')" show="false">
                   <i class="fa fa-eye" aria-hidden="true"></i>
                 </md-button>
 
@@ -256,15 +260,15 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
                   <i class="fa fa-plus" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn show${element.id.get()}" id=${element.id.get()} aria-label="view" show="false">
+                <md-button class="i_btn show${element.id.get()}" id='th_${element.id.get()}' aria-label="view" show="false" ng-click="exec_function('seeAll','${element.id.get()}')">
                   <i class="fa fa-eye" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${element.id.get()} aria-label="rename">
+                <md-button class="i_btn" id=${element.id.get()} aria-label="rename" ng-click="exec_function('rename','${element.id.get()}')">
                   <i class="fa fa-pencil" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${element.id.get()} aria-label="delete">
+                <md-button class="i_btn" id=${element.id.get()} aria-label="delete" ng-click="exec_function('delete','${element.id.get()}')">
                   <i class="fa fa-trash" aria-hidden="true"></i>
                 </md-button>
 
@@ -286,8 +290,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
         container.append(_parent);
 
-        var annotationSelected = angular.element('<div class="item_selected"></div>')
-        container.append(annotationSelected);
+        // var annotationSelected = angular.element('<div class="item_selected"></div>')
+        // container.append(annotationSelected);
 
       }
 
@@ -378,6 +382,113 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         
       }
 
+      viewOrHideAllItem(themeId) {
+        var theme = document.getElementById("th_" + themeId);
+
+        if(theme.getAttribute("show") == "false") {
+          theme.innerHTML = '<i class="fa fa-eye-slash"></i>'
+          theme.setAttribute('show','true');
+          this.changeAllItemsColor(themeId);
+          this.changeAllAnnotationIcon(themeId,"false");
+        } else {
+          theme.innerHTML = '<i class="fa fa-eye"></i>'
+          theme.setAttribute('show','false');
+          this.restoreAllItemsColor(themeId);
+          this.changeAllAnnotationIcon(themeId,"true");
+        }
+
+      }
+
+      getAllAnnotationId(themeId) {
+        var objects = [];
+        var _selected;
+        var notes = this.model;
+
+        for(var i = 0; i < notes.length; i++) {
+          if(notes[i].id == themeId) {
+            _selected = notes[i];
+            for (var i = 0; i < _selected.listModel.length; i++) {
+              var ids = [];
+              var color;
+              for (var j = 0; j < _selected.listModel[i].allObject.length; j++) {
+                ids.push(_selected.listModel[i].allObject[j].dbId.get());
+              }
+              color = _selected.listModel[i].color.get();
+
+              objects.push({
+                ids: ids,
+                color: color,
+                id: _selected.listModel[i].id
+              });
+
+              
+            }
+            return objects;
+          }
+        }
+      
+      }
+
+      changeAllItemsColor(themeId) {
+        var objects = this.getAllAnnotationId(themeId);
+
+        this.viewer.colorAllMaterials(objects);
+
+      }
+
+      restoreAllItemsColor(themeId) {
+        var objects = this.getAllAnnotationId(themeId);
+
+        this.viewer.restoreAllMaterialColor(objects);
+      }
+
+      changeAllAnnotationIcon(themeId,show) {
+        var notes = this.model;
+
+        for (let i = 0; i < notes.length; i++) {
+          const note = notes[i];
+          if(note.id == themeId) {
+            for (let j = 0; j < note.listModel.length; j++) {
+              const annotation = note.listModel[j];
+              var doc = document.getElementById("e_" + annotation.id.get());
+              
+              if(show == "false") {
+                doc.innerHTML = '<i class="fa fa-eye-slash"></i>';
+                doc.setAttribute('show','true');
+              } else {
+                doc.innerHTML = '<i class="fa fa-eye"></i>';
+                doc.setAttribute('show','false');
+              }
+              
+            }
+          }
+          
+        }
+
+      }
+
+      verifyIcon(themeId) {
+        var notes = this.model;
+
+        for (let i = 0; i < notes.length; i++) {
+          const note = notes[i];
+          if(note.id == themeId) {
+            for (let j = 0; j < note.listModel.length; j++) {
+              const annotation = note.listModel[j];
+
+              var doc = document.getElementById("e_" + annotation.id);
+
+              if(doc.getAttribute("show") == "false") {
+                return false;
+              }
+              
+            }
+            return true;
+          }
+          
+        }
+
+      }
 
       // settingAnnotation(id) {
       //   var notes = this.model;
@@ -551,6 +662,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         }
       }
 
+
       getItemsId(themeId,annotationId) {
         var ids = [];
         var selected;
@@ -584,11 +696,33 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         var idsList = this.getItemsId(themeId,annotationId);
 
         this.viewer.setColorMaterial(idsList.ids, idsList.selected.color, idsList.selected.id);
+
+        var doc = document.getElementById("th_" + themeId)
+
+        if(this.verifyIcon(themeId)) {
+          doc.setAttribute('show','true');
+          doc.innerHTML = '<i class="fa fa-eye-slash"></i>'
+        } else {
+          doc.setAttribute('show','false');
+          doc.innerHTML = '<i class="fa fa-eye"></i>'
+        }
+
       }
 
       restoreColor(themeId,annotationId) {
         var idsList = this.getItemsId(themeId, annotationId);
         this.viewer.restoreColorMaterial(idsList.ids,idsList.selected.id);
+
+        var doc = document.getElementById("th_" + themeId)
+
+        if(!this.verifyIcon(themeId)) {
+          doc.setAttribute('show','true');
+          doc.innerHTML = '<i class="fa fa-eye-slash"></i>'
+        } else {
+          doc.setAttribute('show','false');
+          doc.innerHTML = '<i class="fa fa-eye"></i>'
+        }
+
       }
 
       deleteNoteItem(themeId,annotationId,item) {
@@ -694,8 +828,15 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       //------------------------------------------------------ Pannel Message -------------------------------------
       viewMessagePanel(themeId,annotationId) {
-        this.messagePanel.DisplayMessage(themeId,annotationId);
+        this.messagePanel.DetailPanel(themeId,annotationId);
       }
+
+      //----------------------------------------------------- -- Panel File ---------------------------------------
+      viewFilePanel(themeId,annotationId) {
+        this.filePanel.DisplayFilePanel(themeId,annotationId);
+      }
+
+
 
     } // end class
     

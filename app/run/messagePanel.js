@@ -13,6 +13,8 @@ class MessagePanel {
     DetailPanel(themeId,annotationId) {
         var notes = this.model;
 
+        console.log("theme id : ", themeId);
+        console.log("annotation id : ", annotationId);
 
         if(this.detailPanelContent == null){
             this.detailPanelContent = document.createElement('div');
@@ -147,16 +149,16 @@ class MessagePanel {
                 span.id = this._selected.notes[i].id
 
                 span.onclick = function(){
-                var dialog = $mdDialog.confirm()
-                    .ok("Delete !")
-                    .title('Do you want to remove it?')
-                    .cancel('Cancel')
-                    .clickOutsideToClose(true);
-            
-                    $mdDialog.show(dialog)
-                    .then((result) => {
+                    // var dialog = $mdDialog.confirm()
+                    //     .ok("Delete !")
+                    //     .title('Do you want to remove it?')
+                    //     .cancel('Cancel')
+                    //     .clickOutsideToClose(true);
+                
+                    //     $mdDialog.show(dialog)
+                    //     .then((result) => {
                     _self.deteteMessage(this.id,formDiv);
-                    }, function(){});
+                    // }, function(){});
                 
                 }
 
@@ -199,7 +201,6 @@ class MessagePanel {
             
             if(this._selected.notes[i].id == id) {
             this._selected.notes.splice(i,1);
-            // this.DisplayMessage(formDiv);
             break;
             }
             
