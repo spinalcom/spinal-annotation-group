@@ -1,4 +1,5 @@
 
+
 angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialog", "$mdToast", "authService","$rootScope","$compile",
   function (spinalModelDictionary, $mdDialog,$mdToast, authService,$rootScope,$compile) {
 
@@ -9,28 +10,58 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         this.viewer = viewer;
         this.panel = null;
         this.user = authService.get_user();
+        this.messagePanel;
 
-        $rootScope.focus_input = function() {
-          var input = document.getElementById("_input");
-          input.focus();
-        }
-        $rootScope.exec_function = (name,params = null,param2) => {
+        // $rootScope.focus_input = function() {
+        //   var input = document.getElementById("_input");
+        //   input.focus();
+        // }
+
+        $rootScope.exec_function = (name,param1 = null,param2 = null,param3 = null) => {
           switch (name) {
             case "createTheme":
               this.createTheme();
               break;
+
             case "addNote":
-              this.createNote(params);
+              this.createNote(param1);
               break;
+            
             case "seeAnnotation":
-              this.SeeAnnotation(params);
+              this.SeeAnnotation(param1);
               break;
-            case "settingAnnotation":
-              this.settingAnnotation(params);
+            
+              case "addItem":
+              this.AddItems(param1,param2)
               break;
-            case "save" :
-              this.saveModification(params,param2);
+  
+            case "changeColor":
+              this.changeColorInHub(param1,param2,param3);
               break;
+  
+            case "view":
+              this.viewOrHide(param1,param2);
+              break;
+  
+            case "rename":
+              this.renameNote(param1,param2);
+              break;
+  
+            case "delete":
+              this.deleteNoteItem(param1,param2,param3);
+              break;
+
+            case "info":
+              this.viewMessagePanel(param1,param2);
+              break;
+  
+            
+            // case "settingAnnotation":
+            //   this.settingAnnotation(params);
+            //   break;
+            // case "save" :
+            //   this.saveModification(params,param2);
+            //   break;
           }
         }
 
@@ -102,7 +133,6 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
               m.add_attr({
                 groupAnnotationPlugin : new Ptr(this.model)
               });
-
               this.func_success(this.model,_container);
             }
 
@@ -112,6 +142,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
       }
 
       func_success(data,parent) {
+        //this.messagePanel = new MessagePanel(this.viewer,this.model,this.user);
         var container = angular.element('<div class="_container"></div>');
         var addGroup = angular.element(`<md-button class="md-raised md-primary block" ng-click="exec_function('createTheme')">Create a group</md-button>`);
 
@@ -129,6 +160,18 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
         $compile(container)($rootScope);
         parent.append(container);
+
+        var colors = document.getElementsByClassName("input_color");
+        console.log("colors",colors)
+        var _self = this;
+
+        for (let i = 0; i < colors.length; i++) {
+          colors[i].onchange = function() {
+            _self.changeColorInHub(this.theme, this.name, this.value);
+          }
+          
+        }
+
       }
 
 
@@ -155,34 +198,32 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
             content += `<md-list-item ng-click="" class="noright">
                 <p class="noteTitle">${note.title.get()}</p>
 
-              
-                <md-button class="i_btn" aria-label="add_item" id=${note.id.get()} ng-click="exec_function('settingAnnotation','${selected.id.get()}/${note.id.get()}')">
-                  <i class="fa fa-wrench" aria-hidden="true"></i>
+
+                <md-button class="i_btn" aria-label="add_item" id=${note.id.get()} ng-click="exec_function('addItem','${selected.id.get()}','${note.id.get()}')">
+                  <i class="fa fa-plus" aria-hidden="true"></i>
                 </md-button>
 
-              <!-- 
-                <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' name='${note.id.get()}'/>
+                <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' theme='${selected.id.get()}' name='${note.id.get()}'/>
 
-                <md-button class="i_btn show${note.id.get()}" id=${note.id.get()} aria-label="view" show="false">
+                <md-button class="i_btn show${note.id.get()}" id=${note.id.get()} aria-label="view" ng-click="exec_function('view','${selected.id.get()}','${note.id.get()}')" show="false">
                   <i class="fa fa-eye" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${note.id.get()} aria-label="rename">
+                <md-button class="i_btn" id=${note.id.get()} aria-label="rename" ng-click="exec_function('rename','${selected.id.get()}','${note.id.get()}')">
                   <i class="fa fa-pencil" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${note.id.get()} aria-label="delete">
+                <md-button class="i_btn" id=${note.id.get()} aria-label="delete" ng-click="exec_function('delete','${selected.id.get()}','${note.id.get()}')">
                   <i class="fa fa-trash" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${note.id.get()} aria-label="info">
+                <md-button class="i_btn" id=${note.id.get()} aria-label="info" ng-click="exec_function('info','${selected.id.get()}','${note.id.get()}')">
                   <i class="fa fa-comment" aria-hidden="true"></i>
                 </md-button>
 
-                <md-button class="i_btn" id=${note.id.get()} aria-label="info">
+                <md-button class="i_btn" id=${note.id.get()} aria-label="info" ng-click="exec_function('file','${selected.id.get()}','${note.id.get()}')">
                   <i class="fa fa-paperclip" aria-hidden="true"></i>
                 </md-button> 
-              -->
 
             </md-list-item>`;
             
@@ -194,7 +235,6 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         return content;
 
       }
-
 
       displayTheme(parent,container,notes) {
         
@@ -338,93 +378,324 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         
       }
 
-      settingAnnotation(id) {
-        var notes = this.model;
-        var liste = id.split("/");
-        var themeId = liste[0];
-        var annotationId = liste[1];
-        // var sel;
-        // var themeName;
 
-        $rootScope.themeName;
-        $rootScope.annotationSelected;
-        var name;
+      // settingAnnotation(id) {
+      //   var notes = this.model;
+      //   var liste = id.split("/");
+      //   var themeId = liste[0];
+      //   var annotationId = liste[1];
+      //   // var sel;
+      //   // var themeName;
+
+      //   $rootScope.themeName;
+      //   $rootScope.annotationSelected;
+      //   var name;
 
 
-        for (let i = 0; i < notes.length; i++) {
-          const element = notes[i];
-          if(element.id == themeId) {
-            $rootScope.themeName = element.name.get();
-            for (let j = 0; j < element.listModel.length; j++) {
-              const annotation = element.listModel[j];
-              if(annotation.id == annotationId) {
-                // sel = annotation;
-                $rootScope.annotationSelected = annotation;
-                break;
-              }
+      //   for (let i = 0; i < notes.length; i++) {
+      //     const element = notes[i];
+      //     if(element.id == themeId) {
+      //       $rootScope.themeName = element.name.get();
+      //       for (let j = 0; j < element.listModel.length; j++) {
+      //         const annotation = element.listModel[j];
+      //         if(annotation.id == annotationId) {
+      //           // sel = annotation;
+      //           $rootScope.annotationSelected = annotation;
+      //           break;
+      //         }
               
-            }
-            break;
-          }
+      //       }
+      //       break;
+      //     }
           
-        }
+      //   }
 
-        name = $rootScope.annotationSelected.title;
+      //   name = $rootScope.annotationSelected.title;
 
-        var divSelect = document.getElementsByClassName("item_selected")[0];
-        divSelect.innerHTML = "";
+      //   var divSelect = document.getElementsByClassName("item_selected")[0];
+      //   divSelect.innerHTML = "";
 
-        var container = angular.element(divSelect);
+      //   var container = angular.element(divSelect);
 
-        var div = angular.element(`
-          <h1>{{themeName | uppercase}} > ${name}</h1>
-          <br />
-          <div layout="column" class="md-inline-form">
-            <md-input-container class="md-block">
-              <label>Name</label>
-              <input id="_input" ng-model="annotationSelected.title" placeholder="title" ng-click="focus_input()">
-            </md-input-container>
+      //   var div = angular.element(`
+      //     <h1>{{themeName | uppercase}} > ${name}</h1>
+      //     <br />
+      //     <div layout="column" class="md-inline-form">
+      //       <md-input-container class="md-block">
+      //         <label>Name</label>
+      //         <input id="_input" ng-model="annotationSelected.title" placeholder="title" ng-click="focus_input()">
+      //       </md-input-container>
 
-            <md-input-container class="md-block">
-              <label>Color</label>
-              <input ng-model="annotationSelected.color" type="color" placeholder="title">
-            </md-input-container>
+      //       <md-input-container class="md-block">
+      //         <label>Color</label>
+      //         <input ng-model="annotationSelected.color" type="color" placeholder="title">
+      //       </md-input-container>
 
-            <md-button class="md-raised md-primary block" ng-click="exec_function('save',annotationSelected, '${themeId}')">Save</md-button>
+      //       <md-button class="md-raised md-primary block" ng-click="exec_function('save',annotationSelected, '${themeId}')">Save</md-button>
 
-          </div>
+      //     </div>
 
 
-        `);
+      //   `);
 
-        container.append(div);
+      //   container.append(div);
 
-        $compile(container)($rootScope);
+      //   $compile(container)($rootScope);
         
 
+      // }
+
+      // saveModification(annotation,themeId) {
+      //   var notes = this.model;
+
+      //   for (let i = 0; i < notes.length; i++) {
+      //     const element = notes[i];
+      //     if(element.id == themeId) {
+      //       for (let j = 0; j < element.listModel.length; j++) {
+      //         const annotation = element.listModel[j];
+      //         if(annotation.id == annotation.id) {
+      //           notes[i].listModel[j].mod_attr(annotation);
+      //           break;
+      //         }
+              
+      //       }
+      //       break;
+      //     }
+          
+      //   }
+
+      // }
+
+
+
+
+      //---------------------------------------------------- Annotation functions ------------------------------
+
+      AddItems(themeId,annotationId) {
+        var noteSelected, indexTheme,indexNote;
+        var items = this.viewer.getSelection();
+        var notes = this.model;
+  
+  
+        if (items.length == 0) {
+          alert('No model selected !');
+          return;
+        }
+  
+        this.viewer.model.getBulkProperties(items, {
+          propFilter: ['name']
+        }, (models) => {
+  
+          for (var i = 0; i < notes.length; i++) {
+            if (notes[i].id == themeId) {
+              indexTheme = i;
+              for (let j = 0; j < notes[i].listModel.length; j++) {
+                const element = notes[i].listModel[j];
+                if(element.id == annotationId) {
+                  indexNote = j;
+                  noteSelected = notes[i].listModel[j].allObject;
+                  break;
+                }
+                
+              }
+              break;
+              
+            }
+          }
+  
+          for (var j = 0; j < models.length; j++) {
+            noteSelected.push(models[j]);
+          }
+
+          notes[indexTheme].listModel[indexNote].allObject = noteSelected;
+  
+          var toast = $mdToast.simple()
+          .content("Item added !")
+          .action('OK')
+          .highlightAction(true)
+          .hideDelay(0)
+          .position('bottom right')
+          .parent("body");
+  
+          $mdToast.show(toast);
+        }, function () {
+          console.log("error");
+        });
+  
+  
       }
 
-      saveModification(annotation,themeId) {
-        var notes = this.model;
 
-        for (let i = 0; i < notes.length; i++) {
-          const element = notes[i];
-          if(element.id == themeId) {
-            for (let j = 0; j < element.listModel.length; j++) {
-              const annotation = element.listModel[j];
-              if(annotation.id == annotation.id) {
-                notes[i].listModel[j].mod_attr(annotation);
+      changeColorInHub(themeId,annotationId,color) {
+      
+        console.log("themeId", themeId);
+        console.log("annotationId", annotationId);
+        console.log("color", color);
+
+        var noteSelected, indexNote, indexTheme;
+        var notes = this.model;
+  
+        for (var i = 0; i < notes.length; i++) {
+          if (notes[i].id == themeId) {
+            for (let j = 0; j < notes[i].listModel.length; j++) {
+              const element = notes[i].listModel[j];
+
+              if(element.id == annotationId) {
+                notes[i].listModel[j].color.set(color);
                 break;
               }
               
             }
             break;
           }
-          
         }
-
       }
 
+      getItemsId(themeId,annotationId) {
+        var ids = [];
+        var selected;
+        var notes = this.model;
+
+        for (var i = 0; i < notes.length; i++) {
+          if (notes[i].id == themeId) {
+            for (let k = 0; k < notes[i].listModel.length; k++) {
+              const element = notes[i].listModel[k];
+
+              if(element.id == annotationId) {
+                selected = notes[i].listModel[k];
+                break;
+              }
+              
+            }
+            break;
+          }
+        }
+
+
+        for (var j = 0; j < selected.allObject.length; j++) {
+          ids.push(selected.allObject[j].dbId.get());
+        }
+        return {ids : ids, selected : selected};
+      }
+  
+
+      changeItemColor(themeId, annotationId) {
+        
+        var idsList = this.getItemsId(themeId,annotationId);
+
+        this.viewer.setColorMaterial(idsList.ids, idsList.selected.color, idsList.selected.id);
+      }
+
+      restoreColor(themeId,annotationId) {
+        var idsList = this.getItemsId(themeId, annotationId);
+        this.viewer.restoreColorMaterial(idsList.ids,idsList.selected.id);
+      }
+
+      deleteNoteItem(themeId,annotationId,item) {
+
+        var notes = this.model;
+  
+        var dialog = $mdDialog.confirm()
+              .ok("Delete !")
+              .title('Do you want to remove it?')
+              .cancel('Cancel')
+              .clickOutsideToClose(true);
+        
+              $mdDialog.show(dialog)
+              .then((result) => {
+                var themeIndex,annotationIndex;
+
+                for (let i = 0; i < notes.length; i++) {
+                  if(notes[i].id == themeId) {
+                    themeIndex = i;
+                    for(var j = 0; j < notes[i].listModel.length; j++){
+                      if(notes[i].listModel[j].id == annotationId) {
+                        annotationIndex = j;
+                        break;
+                      }  
+                    }
+                    break;
+                  }
+                    
+                }
+
+                if(item != null) {
+                  for (let index = 0; index < notes[themeIndex].listModel[annotationIndex].allObject.length; index++) {
+                    const element = notes[themeIndex].listModel[annotationIndex].allObject[index]
+                    if(element.dbId == item) {
+                      notes[themeIndex].listModel[annotationIndex].allObject.splice(index,1);
+                      break;
+                    } 
+                  }
+                } else if(item == null && annotationId != null) {
+                  notes[themeIndex].listModel.splice(annotationIndex,1);
+                } else {
+                  notes.splice(themeIndex,1);
+                }
+  
+              }, function(){});
+  
+      }
+
+      renameNote(themeId,annotationId) {
+        var notes = this.model;
+  
+        var confirm = $mdDialog.prompt()
+              .title('Rename Note')
+              .placeholder('Please enter the title')
+              .ariaLabel('Rename')
+              .clickOutsideToClose(true)
+              .required(true)
+              .ok('Rename')
+              .cancel('Cancel');
+
+              $mdDialog.show(confirm).then((result) => {
+                var themeIndex;
+
+                for (let i = 0; i < notes.length; i++) {
+                  if(notes[i].id == themeId) {
+                      themeIndex = i;
+                      break;
+                  } 
+                }
+
+                if(annotationId != null) {
+                  for (let j = 0; j < notes[themeIndex].listModel.length; j++) {
+                    const element = notes[themeIndex].listModel[j];
+                    if(element.id == annotationId) {
+                      notes[themeIndex].listModel[j].title.set(result);
+                      break;
+                    }   
+                  }
+                } else {
+                  notes[themeIndex].name.set(result);
+                }
+
+              }, function () {});
+      }
+
+      viewOrHide(themeId, annotationId) {
+
+        var element = document.getElementsByClassName("show" + annotationId)[0];
+        var show = element.getAttribute("show");
+  
+        if(show == "false") {
+          element.setAttribute("show","true");
+          this.changeItemColor(themeId, annotationId);
+          element.innerHTML = '<i class="fa fa-eye-slash" aria-hidden="true"></i>';
+        } else {
+          this.restoreColor(themeId, annotationId);
+          element.setAttribute("show","false");
+          element.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>';
+          
+        }
+  
+      }
+
+      //------------------------------------------------------ Pannel Message -------------------------------------
+      viewMessagePanel(themeId,annotationId) {
+        this.messagePanel.DisplayMessage(themeId,annotationId);
+      }
 
     } // end class
     
