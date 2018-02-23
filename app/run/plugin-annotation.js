@@ -166,17 +166,6 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         $compile(container)($rootScope);
         parent.append(container);
 
-        var colors = document.getElementsByClassName("input_color");
-        console.log("colors",colors)
-        var _self = this;
-
-        for (let i = 0; i < colors.length; i++) {
-          colors[i].onchange = function() {
-            _self.changeColorInHub(this.theme, this.name, this.value);
-          }
-          
-        }
-
       }
 
       displayAnnotation(id) {
@@ -278,7 +267,6 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
             `);
               
             content.append(div);
-
           }
         } else {
           content.append('<h1>No note created ! create one</h1>');
@@ -292,6 +280,18 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
         // var annotationSelected = angular.element('<div class="item_selected"></div>')
         // container.append(annotationSelected);
+
+        /*--------------------------------  Change Color In hub  ------------------------------ */
+        var colors = document.getElementsByClassName("input_color");
+        console.log("colors",colors)
+        var _self = this;
+
+        for (let i = 0; i < colors.length; i++) {
+          colors[i].onchange = function() {
+            _self.changeColorInHub(this.getAttribute("theme"), this.name, this.value);
+          }
+          
+        }
 
       }
 
@@ -469,6 +469,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       verifyIcon(themeId) {
         var notes = this.model;
+        var show = true;
 
         for (let i = 0; i < notes.length; i++) {
           const note = notes[i];
@@ -479,11 +480,12 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
               var doc = document.getElementById("e_" + annotation.id);
 
               if(doc.getAttribute("show") == "false") {
-                return false;
+                show = false;
+                break;
               }
               
             }
-            return true;
+            return show;
           }
           
         }
@@ -695,9 +697,10 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         
         var idsList = this.getItemsId(themeId,annotationId);
 
-        this.viewer.setColorMaterial(idsList.ids, idsList.selected.color, idsList.selected.id);
+        this.viewer.setColorMaterial(idsList.ids, idsList.selected.color.get(), idsList.selected.id.get());
 
         var doc = document.getElementById("th_" + themeId)
+
 
         if(this.verifyIcon(themeId)) {
           doc.setAttribute('show','true');
@@ -715,7 +718,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
         var doc = document.getElementById("th_" + themeId)
 
-        if(!this.verifyIcon(themeId)) {
+        if(this.verifyIcon(themeId)) {
           doc.setAttribute('show','true');
           doc.innerHTML = '<i class="fa fa-eye-slash"></i>'
         } else {
@@ -818,8 +821,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
           this.changeItemColor(themeId, annotationId);
           element.innerHTML = '<i class="fa fa-eye-slash" aria-hidden="true"></i>';
         } else {
-          this.restoreColor(themeId, annotationId);
           element.setAttribute("show","false");
+          this.restoreColor(themeId, annotationId);
           element.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>';
           
         }
