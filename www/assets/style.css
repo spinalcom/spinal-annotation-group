@@ -166,3 +166,12 @@ body {
     float: none;
 }
 
+/*-------------------------------------- Annotation selected ----------------------*/
+
+.select {
+    background: #BDC0C0;
+}
+
+.an_select {
+    background: #BDC0C0;
+}

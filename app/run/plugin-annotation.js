@@ -58,6 +58,10 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
             case "seeAll" :
               this.viewOrHideAllItem(param1);
               break;
+
+            case "select_annotation" :
+              this.SelectAnnotation(param1);
+              break;
   
             
             // case "settingAnnotation":
@@ -188,15 +192,14 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
           for (let j = 0; j < selected.listModel.length; j++) {
             const note = selected.listModel[j];
 
-            content += `<md-list-item ng-click="" class="noright">
-                <p class="noteTitle">${note.title.get()}</p>
-
+            content += `<md-list-item class="noright _annotation" id="an_${note.id.get()}">
+                <p class="noteTitle" ng-click="exec_function('select_annotation','${note.id.get()}')">${note.title.get()}</p>
 
                 <md-button class="i_btn" aria-label="add_item" id=${note.id.get()} ng-click="exec_function('addItem','${selected.id.get()}','${note.id.get()}')">
                   <i class="fa fa-plus" aria-hidden="true"></i>
                 </md-button>
 
-                <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' theme='${selected.id.get()}' name='${note.id.get()}'/>
+                <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' theme='${selected.id.get()}' name='${note.id.get()}' ng-click="exec_function('select_annotation','${note.id.get()}')"/>
 
                 <md-button class="i_btn show${note.id.get()}" id='e_${note.id.get()}' aria-label="view" ng-click="exec_function('view','${selected.id.get()}','${note.id.get()}')" show="false">
                   <i class="fa fa-eye" aria-hidden="true"></i>
@@ -238,7 +241,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
           for (let i = 0; i < notes.length; i++) {
             element = notes[i];
             div = angular.element(`
-              <md-list-item>   
+              <md-list-item class="" id="l_${element.id.get()}">   
                 <p id='p_${element.id.get()}' show="false" ng-click="exec_function('seeAnnotation','${element.id.get()}')">
                   <i class="fa fa-caret-right"></i>
                   &nbsp;
@@ -327,6 +330,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
       createNote(id){
         var notes = this.model;
         var selected;
+        
+        this.SeeAnnotation(id,"item");
 
         for (let i = 0; i < notes.length; i++) {
           const element = notes[i];
@@ -364,21 +369,49 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       }
 
-      SeeAnnotation(id) {
-        var p_div = document.getElementById("p_" + id);
-        var annot_div = document.getElementById("a_" + id);
-        var icon = p_div.getElementsByTagName('i')[0];
+      HideAnnotation(id,annot_div,p_div,icon) {
+        annot_div.style.display = "none";
+        p_div.setAttribute('show','false');
+        icon.setAttribute('class','fa fa-caret-right');
+        document.getElementById("l_" + id).className = "";
+      }
 
+      SeeAnnotation(id, item = null) {
+        var notes = this.model;
+        var note,_id;
 
-        if(p_div.getAttribute("show") == "false") {
-          annot_div.style.display = "block";
-          p_div.setAttribute('show','true');
-          icon.setAttribute('class','fa fa-caret-down')
-        } else {
-          annot_div.style.display = "none";
-          p_div.setAttribute('show','false');
-          icon.setAttribute('class','fa fa-caret-right')
+        for (let i = 0; i < notes.length; i++) {
+          note = notes[i];
+          _id = note.id;
+
+          var p_div = document.getElementById("p_" + _id);
+          var annot_div = document.getElementById("a_" + _id);
+          var icon = p_div.getElementsByTagName('i')[0];
+
+          if(note.id == id) {
+            if(p_div.getAttribute("show") == "false") {
+              annot_div.style.display = "block";
+              p_div.setAttribute('show','true');
+              icon.setAttribute('class','fa fa-caret-down');
+              document.getElementById("l_" + _id).className = "select";
+            } else {
+              if(item == null)
+                this.HideAnnotation(_id,annot_div,p_div,icon);
+            }
+          } else {
+            this.HideAnnotation(_id,annot_div,p_div,icon);
+          }
         }
+        
+        // if(p_div.getAttribute("show") == "false") {
+        //   annot_div.style.display = "block";
+        //   p_div.setAttribute('show','true');
+        //   icon.setAttribute('class','fa fa-caret-down')
+        // } else {
+        //   annot_div.style.display = "none";
+        //   p_div.setAttribute('show','false');
+        //   icon.setAttribute('class','fa fa-caret-right')
+        // }
         
       }
 
@@ -399,7 +432,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       }
 
-      getAllAnnotationId(themeId) {
+      getAllAnnotationId(themeId,show) {
+        this.SeeAnnotation(themeId,"item");
         var objects = [];
         var _selected;
         var notes = this.model;
@@ -411,6 +445,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
               var ids = [];
               var color;
               for (var j = 0; j < _selected.listModel[i].allObject.length; j++) {
+                _selected.listModel[i].view.set(show);
                 ids.push(_selected.listModel[i].allObject[j].dbId.get());
               }
               color = _selected.listModel[i].color.get();
@@ -430,14 +465,14 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
       }
 
       changeAllItemsColor(themeId) {
-        var objects = this.getAllAnnotationId(themeId);
+        var objects = this.getAllAnnotationId(themeId,true);
 
         this.viewer.colorAllMaterials(objects);
 
       }
 
       restoreAllItemsColor(themeId) {
-        var objects = this.getAllAnnotationId(themeId);
+        var objects = this.getAllAnnotationId(themeId,false);
 
         this.viewer.restoreAllMaterialColor(objects);
       }
@@ -488,6 +523,24 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
             return show;
           }
           
+        }
+
+      }
+
+      SelectAnnotation(id) {
+
+        var annotations = document.getElementsByClassName("_annotation");
+
+
+        for (let i = 0; i < annotations.length; i++) {
+          const element = annotations[i];
+          
+          if(element.getAttribute("id") == "an_" + id) {
+            element.classList.add("an_select");
+          } else {
+            element.classList.remove("an_select");
+          }
+
         }
 
       }
@@ -588,7 +641,8 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         var noteSelected, indexTheme,indexNote;
         var items = this.viewer.getSelection();
         var notes = this.model;
-  
+        
+        this.SelectAnnotation(annotationId);
   
         if (items.length == 0) {
           alert('No model selected !');
@@ -665,7 +719,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
       }
 
 
-      getItemsId(themeId,annotationId) {
+      getItemsId(themeId,annotationId,show) {
         var ids = [];
         var selected;
         var notes = this.model;
@@ -677,6 +731,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
               if(element.id == annotationId) {
                 selected = notes[i].listModel[k];
+                selected.view.set(show);
                 break;
               }
               
@@ -695,7 +750,7 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       changeItemColor(themeId, annotationId) {
         
-        var idsList = this.getItemsId(themeId,annotationId);
+        var idsList = this.getItemsId(themeId,annotationId,true);
 
         this.viewer.setColorMaterial(idsList.ids, idsList.selected.color.get(), idsList.selected.id.get());
 
@@ -710,10 +765,12 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
           doc.innerHTML = '<i class="fa fa-eye"></i>'
         }
 
+        this.SelectAnnotation(annotationId);
+
       }
 
       restoreColor(themeId,annotationId) {
-        var idsList = this.getItemsId(themeId, annotationId);
+        var idsList = this.getItemsId(themeId, annotationId,false);
         this.viewer.restoreColorMaterial(idsList.ids,idsList.selected.id);
 
         var doc = document.getElementById("th_" + themeId)
@@ -726,11 +783,19 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
           doc.innerHTML = '<i class="fa fa-eye"></i>'
         }
 
+        this.SelectAnnotation(annotationId);
+
       }
 
       deleteNoteItem(themeId,annotationId,item) {
 
         var notes = this.model;
+
+        if(item == null && annotationId != null) {
+          this.SelectAnnotation(annotationId);
+        } else if(annotationId == null) {
+          this.SeeAnnotation(themeId,"item");
+        }
   
         var dialog = $mdDialog.confirm()
               .ok("Delete !")
@@ -776,7 +841,13 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       renameNote(themeId,annotationId) {
         var notes = this.model;
-  
+        
+        if(annotationId != null) {
+          this.SelectAnnotation(annotationId);
+        } else {
+          this.SeeAnnotation(themeId,"theme");
+        }
+
         var confirm = $mdDialog.prompt()
               .title('Rename Note')
               .placeholder('Please enter the title')
@@ -831,11 +902,13 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
 
       //------------------------------------------------------ Pannel Message -------------------------------------
       viewMessagePanel(themeId,annotationId) {
+        this.SelectAnnotation(annotationId);
         this.messagePanel.DetailPanel(themeId,annotationId);
       }
 
       //----------------------------------------------------- -- Panel File ---------------------------------------
       viewFilePanel(themeId,annotationId) {
+        this.SelectAnnotation(annotationId);
         this.filePanel.DisplayFilePanel(themeId,annotationId);
       }
 
