@@ -206,7 +206,6 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
 
       };
 
-
       $scope.addTheme = () => {
         $mdDialog.show($mdDialog.prompt()
             .title("Add Theme")
@@ -250,12 +249,15 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       $scope.selectedNote = null;
 
       $scope.selectedStyle = (note) => {
+        if(note.listModel) {
+          
+        }
         return note === $scope.selectedNote ? "background-color: #4185f4" : '';
       };
 
       $scope.getViewIcon = (note) => {
 
-        return note.display ? "visibility_off" : "visibility";
+        return note.display ? "fa-eye-slash" : "fa-eye";
       };
 
       $scope.selectNote = (note) => {

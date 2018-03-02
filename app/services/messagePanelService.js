@@ -64,11 +64,18 @@ angular.module('app.spinalcom')
                 this.panel =  messagePanelFactory.getPanel();
             }
 
-            if(this.panel.isVisible())
-                this.panel.setVisible(false);
-            else
+            if(!this.panel.isVisible()) {
+                currentNote = note;
                 this.panel.setVisible(true);
-            currentNote = note;
+                this.panel.setTitle(note.title);
+            } else if(this.panel.isVisible() && note._server_id == currentNote._server_id) {
+                this.panel.setVisible(false);
+            } else {
+                currentNote = note;
+                this.panel.setTitle(note.title);
+            }
+                
+            
 
             if (myCallback)
                 myCallback(currentNote);

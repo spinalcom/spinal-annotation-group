@@ -60,7 +60,7 @@
             </md-button>
 
             <md-button class="md-secondary i_btn" aria-label="Toggle View Note" ng-click="ViewAllNotes(annotation)">
-                <i class="fa fa-eye"></i>
+                <i class="fa {{getViewIcon(annotation)}}"></i>
             </md-button>
 
             <md-button class="md-secondary i_btn" aria-label="Rename Note" ng-click="renameNote(annotation)">

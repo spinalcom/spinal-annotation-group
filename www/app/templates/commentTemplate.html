@@ -1,7 +1,7 @@
 
 <div class="messageContainer">
     <div class="message_div" ng-repeat="message in messages.notes">
-        <div class="message_date">{{message.date}}</div>
+        <div class="message_date">{{message.date | date:"dd/MM/yyyy"}}</div>
 
         <div class="_message">
             <div class="message_owner">{{message.username}}</div>
