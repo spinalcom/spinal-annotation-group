@@ -73,4 +73,21 @@ angular.module('app.services')
         return id;
       }
     });
+  })
+
+  .factory('spinalRegisterViewerPlugin', function () {
+    let plugin = [];
+    return ({
+    get: () => {
+    return plugin;
+    },
+    register: (name) => {
+    for (var i = 0; i < plugin.length; i++) {
+    if (plugin[i] === name) {
+    return;
+    }
+      }
+        plugin.push(name);
+      }
+    });
   });

@@ -1,6 +1,6 @@
 angular.module('app.spinalforge.plugin')
-  .controller('forgeViewerCtrl', ["$scope", "$rootScope", "$mdDialog", "authService", "$compile", "$injector", "layout_uid", "spinalModelDictionary",
-    function ($scope, $rootScope, $mdDialog, authService, $compile, $injector, layout_uid, spinalModelDictionary) {
+  .controller('forgeViewerCtrl', ["$scope", "$rootScope", "$mdDialog", "authService", "$compile", "$injector", "layout_uid", "spinalModelDictionary","spinalRegisterViewerPlugin",
+    function ($scope, $rootScope, $mdDialog, authService, $compile, $injector, layout_uid, spinalModelDictionary,spinalRegisterViewerPlugin) {
       $scope.injector = $injector;
       $scope.uid = layout_uid.get();
       console.log("forgeviewerCtrl start")
@@ -26,9 +26,9 @@ angular.module('app.spinalforge.plugin')
       spinalModelDictionary.init().then(function (ForgeFile) {
         var viewerApp, viewables, indexViewable;
         console.log("forgeviewerCtrl start 2")
-
+        spinalRegisterViewerPlugin.register("Autodesk.ADN.Viewing.Extension.Color");
         var config3d = {
-          extensions: ['PannelAnnotation', "Autodesk.ADN.Viewing.Extension.Color"]
+          extensions:spinalRegisterViewerPlugin.get()
         };
         var options = {
           env: 'AutodeskProduction',

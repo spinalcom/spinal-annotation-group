@@ -1,802 +1,307 @@
+import { ThemeModel } from "../../../spinal-lib-forgefile/forgefile";
 
+let appSpinalforgePlugin = angular.module('app.spinalforge.plugin');
+appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "spinalRegisterViewerPlugin",
+    function ($rootScope, $compile, $templateCache, $http, spinalRegisterViewerPlugin) {
+      spinalRegisterViewerPlugin.register("PannelAnnotation");
+      // var extensions = ['PannelAnnotation', "Autodesk.ADN.Viewing.Extension.Color"];
 
-angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialog", "$mdToast", "authService","$rootScope","$compile",
-  function (spinalModelDictionary, $mdDialog,$mdToast, authService,$rootScope,$compile) {
-
-    class PannelAnnotation {
-      constructor(viewer, options) {
-        Autodesk.Viewing.Extension.call(this, viewer, options);
-
-        this.viewer = viewer;
-        this.panel = null;
-        this.user = authService.get_user();
-        this.messagePanel;
-        this.filePanel;
-
-        $rootScope.exec_function = (name,param1 = null,param2 = null,param3 = null) => {
-          switch (name) {
-            case "createTheme":
-              this.createTheme();
-              break;
-
-            case "addNote":
-              this.createNote(param1);
-              break;
-            
-            case "seeAnnotation":
-              this.SeeAnnotation(param1);
-              break;
-            
-              case "addItem":
-              this.AddItems(param1,param2)
-              break;
-  
-            case "changeColor":
-              this.changeColorInHub(param1,param2,param3);
-              break;
-  
-            case "view":
-              this.viewOrHide(param1,param2);
-              break;
-  
-            case "rename":
-              this.renameNote(param1,param2);
-              break;
-  
-            case "delete":
-              this.deleteNoteItem(param1,param2,param3);
-              break;
-
-            case "info":
-              this.viewMessagePanel(param1,param2);
-              break;
-            
-            case "file":
-              this.viewFilePanel(param1,param2);
-              break;
-            
-            case "seeAll" :
-              this.viewOrHideAllItem(param1);
-              break;
-
-            case "select_annotation" :
-              this.SelectAnnotation(param1);
-              break;
-  
-            
-            // case "settingAnnotation":
-            //   this.settingAnnotation(params);
-            //   break;
-            // case "save" :
-            //   this.saveModification(params,param2);
-            //   break;
-          }
-        }
-
-      }
-
-      load() {
-        if (this.viewer.toolbar) {
-          this.createUI();
-        } else {
-          this.onToolbarCreatedBinded = this.onToolbarCreated.bind(this);
-          this.viewer.addEventListener(av.TOOLBAR_CREATED_EVENT, this.onToolbarCreatedBinded);
-        }
-        return true;
-      }
-
-      onToolbarCreated() {
-        this.viewer.removeEventListener(av.TOOLBAR_CREATED_EVENT, this.onToolbarCreatedBinded);
-        this.onToolbarCreatedBinded = null;
-        this.createUI();
-      }
-
-      unload() {
-        this.viewer.toolbar.removeControl(this.subToolbar);
-        return true;
-      }
-
-      createUI() {
-        var title = 'Annotation';
-        this.panel = new PanelClass(this.viewer, title);
-
-        this.initialize();
-
-        var button1 = new Autodesk.Viewing.UI.Button('Annotation');
-
-        button1.onClick = (e) => {
-          if (!this.panel.isVisible()) {
-            this.panel.setVisible(true);
-          } else {
-            this.panel.setVisible(false);
-          }
-        };
-
-        button1.addClass('fa');
-        button1.addClass('fa-pencil');
-        button1.addClass('fa-2x');
-        button1.setToolTip('Annotation');
-
-        this.subToolbar = new Autodesk.Viewing.UI.ControlGroup('my-Annotation');
-        this.subToolbar.addControl(button1);
-        this.viewer.toolbar.addControl(this.subToolbar);
-      }
-
-      initialize() {
-
-
-        this.panel.initializeMoveHandlers(this.panel.container);
-        // this.panel.container.appendChild(this.panel.createScrollContainer());
-        var _container = angular.element(this.panel.container);
-
-        spinalModelDictionary.init().then((m) => {
-          if (m) {
-            if (m.groupAnnotationPlugin) {
-              m.groupAnnotationPlugin.load((mod) => {
-                this.model = mod;
-                this.func_success(this.model,_container);
-              });
-            } else {
-              this.model = new Lst();
-              m.add_attr({
-                groupAnnotationPlugin : new Ptr(this.model)
-              });
-              this.func_success(this.model,_container);
-            }
-
-          }
-
+      let load_template = (uri, name) => {
+        $http.get(uri).then((response) => {
+          $templateCache.put(name, response.data);
+        }, (errorResponse) => {
+          console.log('Cannot load the file ' + uri);
         });
+      };
+      let toload = [{
+        uri: 'app/templates/annotationTemplate.html',
+        name: 'annotationTemplate.html'
+      }];
+      for (var i = 0; i < toload.length; i++) {
+        load_template(toload[i].uri, toload[i].name);
       }
 
-      func_success(data,parent) {
-        this.messagePanel = new MessagePanel(this.viewer,this.model,this.user);
-        this.filePanel = new FilesPanel(this.viewer,this.model,this.user);
-        var container = angular.element('<div class="_container"></div>');
-        var addGroup = angular.element(`<md-button class="md-raised md-primary block" ng-click="exec_function('createTheme')">Create a group</md-button>`);
 
-        var items = document.createElement('div');
-        items.className = "themes";
-
-        
-
-        container.append(addGroup)
-        
-        data.bind(() => {
-          items.innerHTML = "";
-          this.displayTheme(items,container,data);
-        })
-
-        $compile(container)($rootScope);
-        parent.append(container);
-
-      }
-
-      displayAnnotation(id) {
-
-        var notes = this.model;
-        var selected;
-
-
-        var content = `<md-list class='md-list-item-text' id="a_${id}">`;
-        
-        for (let i = 0; i < notes.length; i++) {
-          const element = notes[i];
-          if(element.id == id) {
-            selected = element;
-            break;
-          }
+      class PannelAnnotation {
+        constructor(viewer, options) {
+          Autodesk.Viewing.Extension.call(this, viewer, options);
+          this.viewer = viewer;
+          this.panel = null;
         }
 
-        if(selected != null) {
-          for (let j = 0; j < selected.listModel.length; j++) {
-            const note = selected.listModel[j];
-
-            content += `<md-list-item class="noright _annotation" id="an_${note.id.get()}">
-                <p class="noteTitle" ng-click="exec_function('select_annotation','${note.id.get()}')">${note.title.get()}</p>
-
-                <md-button class="i_btn" aria-label="add_item" id=${note.id.get()} ng-click="exec_function('addItem','${selected.id.get()}','${note.id.get()}')">
-                  <i class="fa fa-plus" aria-hidden="true"></i>
-                </md-button>
-
-                <input class="i_btn input_color" value="${note.color.get()}" id="i_color" type='color' theme='${selected.id.get()}' name='${note.id.get()}' ng-click="exec_function('select_annotation','${note.id.get()}')"/>
-
-                <md-button class="i_btn show${note.id.get()}" id='e_${note.id.get()}' aria-label="view" ng-click="exec_function('view','${selected.id.get()}','${note.id.get()}')" show="false">
-                  <i class="fa fa-eye" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${note.id.get()} aria-label="rename" ng-click="exec_function('rename','${selected.id.get()}','${note.id.get()}')">
-                  <i class="fa fa-pencil" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${note.id.get()} aria-label="delete" ng-click="exec_function('delete','${selected.id.get()}','${note.id.get()}')">
-                  <i class="fa fa-trash" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${note.id.get()} aria-label="info" ng-click="exec_function('info','${selected.id.get()}','${note.id.get()}')">
-                  <i class="fa fa-comment" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${note.id.get()} aria-label="info" ng-click="exec_function('file','${selected.id.get()}','${note.id.get()}')">
-                  <i class="fa fa-paperclip" aria-hidden="true"></i>
-                </md-button> 
-
-            </md-list-item>`;
-            
+        load() {
+          if (this.viewer.toolbar) {
+            this.createUI();
+          } else {
+            this.onToolbarCreatedBinded = this.onToolbarCreated.bind(this);
+            this.viewer.addEventListener(av.TOOLBAR_CREATED_EVENT, this.onToolbarCreatedBinded);
           }
-        }
-        
-        content += `</md-list>`;
-
-        return content;
-
-      }
-
-      displayTheme(parent,container,notes) {
-        
-        var content = angular.element(`<md-list></md-list>`);
-        var div,element;
-
-        if(notes.length > 0) {
-          for (let i = 0; i < notes.length; i++) {
-            element = notes[i];
-            div = angular.element(`
-              <md-list-item class="" id="l_${element.id.get()}">   
-                <p id='p_${element.id.get()}' show="false" ng-click="exec_function('seeAnnotation','${element.id.get()}')">
-                  <i class="fa fa-caret-right"></i>
-                  &nbsp;
-                  ${element.name.get()}
-                </p>
-
-                <md-button class="i_btn" aria-label="add_item" id=${element.id.get()} ng-click="exec_function('addNote','${element.id.get()}')">
-                  <i class="fa fa-plus" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn show${element.id.get()}" id='th_${element.id.get()}' aria-label="view" show="false" ng-click="exec_function('seeAll','${element.id.get()}')">
-                  <i class="fa fa-eye" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${element.id.get()} aria-label="rename" ng-click="exec_function('rename','${element.id.get()}')">
-                  <i class="fa fa-pencil" aria-hidden="true"></i>
-                </md-button>
-
-                <md-button class="i_btn" id=${element.id.get()} aria-label="delete" ng-click="exec_function('delete','${element.id.get()}')">
-                  <i class="fa fa-trash" aria-hidden="true"></i>
-                </md-button>
-
-              </md-list-item>
-
-              ${this.displayAnnotation(element.id.get())}
-            `);
-              
-            content.append(div);
-          }
-        } else {
-          content.append('<h1>No note created ! create one</h1>');
-        }
-        var _parent = angular.element(parent);
-        var c = angular.element(content);
-        _parent.append(c);
-        $compile(c)($rootScope);
-
-        container.append(_parent);
-
-        // var annotationSelected = angular.element('<div class="item_selected"></div>')
-        // container.append(annotationSelected);
-
-        /*--------------------------------  Change Color In hub  ------------------------------ */
-        var colors = document.getElementsByClassName("input_color");
-        console.log("colors",colors)
-        var _self = this;
-
-        for (let i = 0; i < colors.length; i++) {
-          colors[i].onchange = function() {
-            _self.changeColorInHub(this.getAttribute("theme"), this.name, this.value);
-          }
-          
+          return true;
         }
 
-      }
-
-      createTheme() {
-        var notes = this.model;
-        var theme = new ThemeModel();
-
-        theme.id.set(newGUID());
-        theme.creation.set(Date.now());
-        theme.owner.set(this.user.id);
-        theme.username.set(this.user.username);
-
-        var confirm = $mdDialog.prompt()
-          .title('Theme')
-          .placeholder('Please enter the theme')
-          .ariaLabel('New Theme')
-          .clickOutsideToClose(true)
-          .required(true)
-          .ok('create!')
-          .cancel('Cancel')
-        
-          $mdDialog.show(confirm).then((result) => {
-            theme.name.set(result);
-
-            notes.push(theme);
-
-            console.log(this.model)
-
-          },function(){})
-
-      }
-
-      createNote(id){
-        var notes = this.model;
-        var selected;
-        
-        this.SeeAnnotation(id,"item");
-
-        for (let i = 0; i < notes.length; i++) {
-          const element = notes[i];
-          if(element.id == id) {
-            selected = element;
-            break;
-          }
-          
+        onToolbarCreated() {
+          this.viewer.removeEventListener(av.TOOLBAR_CREATED_EVENT, this.onToolbarCreatedBinded);
+          this.onToolbarCreatedBinded = null;
+          this.createUI();
         }
 
-        var noteModel = new NoteModel();
+        unload() {
+          this.viewer.toolbar.removeControl(this.subToolbar);
+          return true;
+        }
 
-        noteModel.id.set(newGUID());
-        noteModel.owner.set(this.user.id);
-        noteModel.username.set(this.user.username);
-        noteModel.date.set(Date.now());
-        noteModel.color.set("#000000");
+        createUI() {
+          var title = 'Annotation';
+          this.panel = new PanelClass(this.viewer, title);
+          var button1 = new Autodesk.Viewing.UI.Button('Annotation');
 
-        var confirm = $mdDialog.prompt()
-          .title('Note')
-          .placeholder('Note name')
-          .ariaLabel('New Note')
-          .clickOutsideToClose(true)
-          .required(true)
-          .ok('create')
-          .cancel('Cancel')
-        
-        $mdDialog.show(confirm).then((result) => {
-          noteModel.title.set(result);
-
-          selected.listModel.push(noteModel);
-
-        },function(){})
-        
-
-      }
-
-      HideAnnotation(id,annot_div,p_div,icon) {
-        annot_div.style.display = "none";
-        p_div.setAttribute('show','false');
-        icon.setAttribute('class','fa fa-caret-right');
-        document.getElementById("l_" + id).className = "";
-      }
-
-      SeeAnnotation(id, item = null) {
-        var notes = this.model;
-        var note,_id;
-
-        for (let i = 0; i < notes.length; i++) {
-          note = notes[i];
-          _id = note.id;
-
-          var p_div = document.getElementById("p_" + _id);
-          var annot_div = document.getElementById("a_" + _id);
-          var icon = p_div.getElementsByTagName('i')[0];
-
-          if(note.id == id) {
-            if(p_div.getAttribute("show") == "false") {
-              annot_div.style.display = "block";
-              p_div.setAttribute('show','true');
-              icon.setAttribute('class','fa fa-caret-down');
-              document.getElementById("l_" + _id).className = "select";
+          button1.onClick = (e) => {
+            if (!this.panel.isVisible()) {
+              this.panel.setVisible(true);
             } else {
-              if(item == null)
-                this.HideAnnotation(_id,annot_div,p_div,icon);
+              this.panel.setVisible(false);
             }
+          };
+
+          button1.addClass('fa');
+          button1.addClass('fa-pencil');
+          button1.addClass('fa-2x');
+          button1.setToolTip('Annotation');
+
+          this.subToolbar = this.viewer.toolbar.getControl("my-Annotation");
+          if (!this.subToolbar) {
+            this.subToolbar = new Autodesk.Viewing.UI.ControlGroup('my-Annotation');
+            this.viewer.toolbar.addControl(this.subToolbar);
+          }
+          this.subToolbar.addControl(button1);
+          this.initialize();
+        }
+
+        initialize() {
+          var _container = document.createElement('div');
+          _container.style.height = "calc(100% - 45px)";
+          _container.style.overflowY = 'auto';
+          this.panel.container.appendChild(_container);
+
+          $(_container).html("<div ng-controller=\"annotationCtrl\" ng-cloak>" +
+            $templateCache.get("annotationTemplate.html") + "</div>");
+          $compile($(_container).contents())($rootScope);
+        }
+      } // end class
+      Autodesk.Viewing.theExtensionManager.registerExtension('PannelAnnotation', PannelAnnotation);
+    } // end run
+  ])
+
+  //---------------------------------------------------------------------------------------------------------
+
+
+  .controller('annotationCtrl', ["$scope", "$rootScope", "$mdToast", "$mdDialog", "authService", "$compile", "$injector", "layout_uid", "spinalModelDictionary", "$q",
+    function ($scope, $rootScope, $mdToast, $mdDialog, authService, $compile, $injector, layout_uid, spinalModelDictionary, $q) {
+      var viewer = v;
+      $scope.user = authService.get_user();
+      $scope.headerBtnClick = (btn) => {
+        console.log("headerBtnClick");
+        console.log(btn);
+
+        if(btn.label == "add theme") {
+          $scope.addTheme();
+        }
+      };
+
+      $scope.headerBtn = [{
+          label: "add theme",
+          icon: "note_add"
+        }
+        // ,
+        // {
+        //   label: "visibility",
+        //   icon: "visibility",
+        //   toggleIcon: ""
+        // },
+        // {
+        //   label: "visibility cancel",
+        //   icon: "visibility_off"
+        // },
+      ];
+      $scope.currentVisibleObj = [];
+
+      $scope.themes = [];
+      spinalModelDictionary.init().then((m) => {
+        if (m) {
+          if (m.groupAnnotationPlugin) {
+            m.groupAnnotationPlugin.load((mod) => {
+              $scope.themeListModel = mod;
+              $scope.themeListModel.bind($scope.onModelChange);
+            });
           } else {
-            this.HideAnnotation(_id,annot_div,p_div,icon);
+            $scope.themeListModel = new Lst();
+            m.add_attr({
+              groupAnnotationPlugin: new Ptr($scope.themeListModel)
+            });
+            $scope.themeListModel.bind($scope.onModelChange);
           }
         }
-        
-        // if(p_div.getAttribute("show") == "false") {
-        //   annot_div.style.display = "block";
-        //   p_div.setAttribute('show','true');
-        //   icon.setAttribute('class','fa fa-caret-down')
-        // } else {
-        //   annot_div.style.display = "none";
-        //   p_div.setAttribute('show','false');
-        //   icon.setAttribute('class','fa fa-caret-right')
-        // }
-        
-      }
+      });
 
-      viewOrHideAllItem(themeId) {
-        var theme = document.getElementById("th_" + themeId);
-
-        if(theme.getAttribute("show") == "false") {
-          theme.innerHTML = '<i class="fa fa-eye-slash"></i>'
-          theme.setAttribute('show','true');
-          this.changeAllItemsColor(themeId);
-          this.changeAllAnnotationIcon(themeId,"false");
-        } else {
-          theme.innerHTML = '<i class="fa fa-eye"></i>'
-          theme.setAttribute('show','false');
-          this.restoreAllItemsColor(themeId);
-          this.changeAllAnnotationIcon(themeId,"true");
-        }
-
-      }
-
-      getAllAnnotationId(themeId,show) {
-        this.SeeAnnotation(themeId,"item");
-        var objects = [];
-        var _selected;
-        var notes = this.model;
-
-        for(var i = 0; i < notes.length; i++) {
-          if(notes[i].id == themeId) {
-            _selected = notes[i];
-            for (var i = 0; i < _selected.listModel.length; i++) {
-              var ids = [];
-              var color;
-              for (var j = 0; j < _selected.listModel[i].allObject.length; j++) {
-                _selected.listModel[i].view.set(show);
-                ids.push(_selected.listModel[i].allObject[j].dbId.get());
-              }
-              color = _selected.listModel[i].color.get();
-
-              objects.push({
-                ids: ids,
-                color: color,
-                id: _selected.listModel[i].id
-              });
-
-              
-            }
-            return objects;
-          }
-        }
-      
-      }
-
-      changeAllItemsColor(themeId) {
-        var objects = this.getAllAnnotationId(themeId,true);
-
-        this.viewer.colorAllMaterials(objects);
-
-      }
-
-      restoreAllItemsColor(themeId) {
-        var objects = this.getAllAnnotationId(themeId,false);
-
-        this.viewer.restoreAllMaterialColor(objects);
-      }
-
-      changeAllAnnotationIcon(themeId,show) {
-        var notes = this.model;
-
-        for (let i = 0; i < notes.length; i++) {
-          const note = notes[i];
-          if(note.id == themeId) {
-            for (let j = 0; j < note.listModel.length; j++) {
-              const annotation = note.listModel[j];
-              var doc = document.getElementById("e_" + annotation.id.get());
-              
-              if(show == "false") {
-                doc.innerHTML = '<i class="fa fa-eye-slash"></i>';
-                doc.setAttribute('show','true');
-              } else {
-                doc.innerHTML = '<i class="fa fa-eye"></i>';
-                doc.setAttribute('show','false');
-              }
-              
-            }
-          }
-          
-        }
-
-      }
-
-      verifyIcon(themeId) {
-        var notes = this.model;
-        var show = true;
-
-        for (let i = 0; i < notes.length; i++) {
-          const note = notes[i];
-          if(note.id == themeId) {
-            for (let j = 0; j < note.listModel.length; j++) {
-              const annotation = note.listModel[j];
-
-              var doc = document.getElementById("e_" + annotation.id);
-
-              if(doc.getAttribute("show") == "false") {
-                show = false;
-                break;
-              }
-              
-            }
-            return show;
-          }
-          
-        }
-
-      }
-
-      SelectAnnotation(id) {
-
-        var annotations = document.getElementsByClassName("_annotation");
-
-
-        for (let i = 0; i < annotations.length; i++) {
-          const element = annotations[i];
-          
-          if(element.getAttribute("id") == "an_" + id) {
-            element.classList.add("an_select");
-          } else {
-            element.classList.remove("an_select");
-          }
-
-        }
-
-      }
-
-      // settingAnnotation(id) {
-      //   var notes = this.model;
-      //   var liste = id.split("/");
-      //   var themeId = liste[0];
-      //   var annotationId = liste[1];
-      //   // var sel;
-      //   // var themeName;
-
-      //   $rootScope.themeName;
-      //   $rootScope.annotationSelected;
-      //   var name;
-
-
-      //   for (let i = 0; i < notes.length; i++) {
-      //     const element = notes[i];
-      //     if(element.id == themeId) {
-      //       $rootScope.themeName = element.name.get();
-      //       for (let j = 0; j < element.listModel.length; j++) {
-      //         const annotation = element.listModel[j];
-      //         if(annotation.id == annotationId) {
-      //           // sel = annotation;
-      //           $rootScope.annotationSelected = annotation;
-      //           break;
-      //         }
-              
-      //       }
-      //       break;
-      //     }
-          
-      //   }
-
-      //   name = $rootScope.annotationSelected.title;
-
-      //   var divSelect = document.getElementsByClassName("item_selected")[0];
-      //   divSelect.innerHTML = "";
-
-      //   var container = angular.element(divSelect);
-
-      //   var div = angular.element(`
-      //     <h1>{{themeName | uppercase}} > ${name}</h1>
-      //     <br />
-      //     <div layout="column" class="md-inline-form">
-      //       <md-input-container class="md-block">
-      //         <label>Name</label>
-      //         <input id="_input" ng-model="annotationSelected.title" placeholder="title" ng-click="focus_input()">
-      //       </md-input-container>
-
-      //       <md-input-container class="md-block">
-      //         <label>Color</label>
-      //         <input ng-model="annotationSelected.color" type="color" placeholder="title">
-      //       </md-input-container>
-
-      //       <md-button class="md-raised md-primary block" ng-click="exec_function('save',annotationSelected, '${themeId}')">Save</md-button>
-
-      //     </div>
-
-
-      //   `);
-
-      //   container.append(div);
-
-      //   $compile(container)($rootScope);
-        
-
-      // }
-
-      // saveModification(annotation,themeId) {
-      //   var notes = this.model;
-
-      //   for (let i = 0; i < notes.length; i++) {
-      //     const element = notes[i];
-      //     if(element.id == themeId) {
-      //       for (let j = 0; j < element.listModel.length; j++) {
-      //         const annotation = element.listModel[j];
-      //         if(annotation.id == annotation.id) {
-      //           notes[i].listModel[j].mod_attr(annotation);
-      //           break;
-      //         }
-              
-      //       }
-      //       break;
-      //     }
-          
-      //   }
-
-      // }
-
-
-
-
-      //---------------------------------------------------- Annotation functions ------------------------------
-
-      AddItems(themeId,annotationId) {
-        var noteSelected, indexTheme,indexNote;
-        var items = this.viewer.getSelection();
-        var notes = this.model;
-        
-        this.SelectAnnotation(annotationId);
-  
-        if (items.length == 0) {
-          alert('No model selected !');
+      function deferObjRdy(model, promise) {
+        if (FileSystem._tmp_objects[model._server_id]) {
+          setTimeout(() => {
+            deferObjChange(model, promise);
+          }, 200);
           return;
         }
-  
-        this.viewer.model.getBulkProperties(items, {
-          propFilter: ['name']
-        }, (models) => {
-  
-          for (var i = 0; i < notes.length; i++) {
-            if (notes[i].id == themeId) {
-              indexTheme = i;
-              for (let j = 0; j < notes[i].listModel.length; j++) {
-                const element = notes[i].listModel[j];
-                if(element.id == annotationId) {
-                  indexNote = j;
-                  noteSelected = notes[i].listModel[j].allObject;
-                  break;
-                }
-                
-              }
-              break;
-              
+        promise.resolve(model);
+      }
+
+      $scope.waitObjRdy = (model) => {
+        let deferred = $q.defer();
+        deferObjRdy(model, deferred);
+        return deferred.promise;
+      };
+
+      $scope.onModelChange = () => {
+        $scope.themes = [];
+        let promiseLst = [];
+        for (var i = 0; i < $scope.themeListModel.length; i++) {
+          let note = $scope.themeListModel[i];
+          promiseLst.push($scope.waitObjRdy(note));
+        }
+        $q.all(promiseLst).then((res) => {
+          $scope.themes = [];
+          for (var i = 0; i < $scope.themeListModel.length; i++) {
+            let note = $scope.themeListModel[i];
+            let mod = note.get_obj();
+            mod._server_id = note._server_id;
+            $scope.themes.push(mod);
+            if ($scope.selectedNote && $scope.selectedNote._server_id == mod._server_id) {
+              $scope.selectedNote = mod;
             }
-          }
-  
-          for (var j = 0; j < models.length; j++) {
-            noteSelected.push(models[j]);
+            // $scope.$apply();
+
+            // chcck if aplly color
           }
 
-          notes[indexTheme].listModel[indexNote].allObject = noteSelected;
-  
-          var toast = $mdToast.simple()
-          .content("Item added !")
-          .action('OK')
-          .highlightAction(true)
-          .hideDelay(0)
-          .position('bottom right')
-          .parent("body");
-  
-          $mdToast.show(toast);
-        }, function () {
-          console.log("error");
         });
-  
-  
+      };
+
+
+      $scope.addTheme = () => {
+        $mdDialog.show($mdDialog.prompt()
+            .title("Add Theme")
+            .placeholder('Please enter the Name')
+            .ariaLabel('Add Theme')
+            .clickOutsideToClose(true)
+            .required(true)
+            .ok('Confirm').cancel('Cancel'))
+          .then(function (result) {
+            var newTheme = new ThemeModel();
+            newTheme.name.set(result);
+            newTheme.owner.set($scope.user.id);
+            newTheme.username.set($scope.user.username);
+            
+            $scope.themeListModel.push(newTheme);
+            
+          }, () => {});
       }
 
+      $scope.$on('colorpicker-closed', function (data1,data2) {
 
-      changeColorInHub(themeId,annotationId,color) {
-      
-        console.log("themeId", themeId);
-        console.log("annotationId", annotationId);
-        console.log("color", color);
+        console.log(data1);
+        console.log(data2);
 
-        var noteSelected, indexNote, indexTheme;
-        var notes = this.model;
-  
-        for (var i = 0; i < notes.length; i++) {
-          if (notes[i].id == themeId) {
-            for (let j = 0; j < notes[i].listModel.length; j++) {
-              const element = notes[i].listModel[j];
+        // update moedels via $scope.themes
+        for (var i = 0; i < $scope.themes.length; i++) {
+          let note = $scope.themes[i];
+          for (var j = 0; j < note.listModel.length; j++) {
+            let annotation = note.listModel[j];
 
-              if(element.id == annotationId) {
-                notes[i].listModel[j].color.set(color);
-                break;
-              }
-              
+            let mod = FileSystem._objects[annotation._server_id];
+
+
+            if (mod) {
+              mod.color.set(annotation.color);
             }
-            break;
           }
         }
-      }
+      });
 
+      $scope.selectedNote = null;
 
-      getItemsId(themeId,annotationId,show) {
-        var ids = [];
-        var selected;
-        var notes = this.model;
+      $scope.selectedStyle = (note) => {
+        return note === $scope.selectedNote ? "background-color: #4185f4" : '';
+      };
 
-        for (var i = 0; i < notes.length; i++) {
-          if (notes[i].id == themeId) {
-            for (let k = 0; k < notes[i].listModel.length; k++) {
-              const element = notes[i].listModel[k];
+      $scope.getViewIcon = (note) => {
 
-              if(element.id == annotationId) {
-                selected = notes[i].listModel[k];
-                selected.view.set(show);
-                break;
+        return note.display ? "visibility_off" : "visibility";
+      };
+
+      $scope.selectNote = (note) => {
+        $scope.selectedNote = note;
+      };
+
+      $scope.renameNote = (note) => {
+        $mdDialog.show($mdDialog.prompt()
+            .title("Rename")
+            .placeholder('Please enter the title')
+            .ariaLabel('Rename')
+            .clickOutsideToClose(true)
+            .required(true)
+            .ok('Confirm').cancel('Cancel'))
+          .then(function (result) {
+            let mod = FileSystem._objects[note._server_id];
+
+            console.log(mod);
+
+            if (mod) {
+              if(mod.title)
+                mod.title.set(result);
+              else {
+                mod.name.set(result);
               }
-              
             }
-            break;
-          }
-        }
+          }, () => {});
+      };
 
+      $scope.ViewAllNotes = (theme) => {
+        theme.view = !theme.view;
+      };
 
-        for (var j = 0; j < selected.allObject.length; j++) {
-          ids.push(selected.allObject[j].dbId.get());
-        }
-        return {ids : ids, selected : selected};
-      }
-  
+      $scope.addNoteInTheme = (theme) => {
+        $mdDialog.show($mdDialog.prompt()
+            .title("Add Note")
+            .placeholder('Please enter the title')
+            .ariaLabel('Add Note')
+            .clickOutsideToClose(true)
+            .required(true)
+            .ok('Confirm')
+            .cancel('Cancel')
+          )
+          .then(function (result) {
+            let mod = FileSystem._objects[theme._server_id];
 
-      changeItemColor(themeId, annotationId) {
-        
-        var idsList = this.getItemsId(themeId,annotationId,true);
+            
+            var annotation = new NoteModel();
 
-        this.viewer.setColorMaterial(idsList.ids, idsList.selected.color.get(), idsList.selected.id.get());
+            annotation.title.set(result);
+            annotation.color.set('#000000');
+            annotation.owner.set($scope.user.id);
+            annotation.username.set($scope.user.username);
 
-        var doc = document.getElementById("th_" + themeId)
+            
+            if(mod) {
+              mod.listModel.push(annotation);
+            } else {
+              console.log("mod null");
+            }
 
+          }, () => {
+            console.log("canceled")
+          });
+      };
 
-        if(this.verifyIcon(themeId)) {
-          doc.setAttribute('show','true');
-          doc.innerHTML = '<i class="fa fa-eye-slash"></i>'
-        } else {
-          doc.setAttribute('show','false');
-          doc.innerHTML = '<i class="fa fa-eye"></i>'
-        }
-
-        this.SelectAnnotation(annotationId);
-
-      }
-
-      restoreColor(themeId,annotationId) {
-        var idsList = this.getItemsId(themeId, annotationId,false);
-        this.viewer.restoreColorMaterial(idsList.ids,idsList.selected.id);
-
-        var doc = document.getElementById("th_" + themeId)
-
-        if(this.verifyIcon(themeId)) {
-          doc.setAttribute('show','true');
-          doc.innerHTML = '<i class="fa fa-eye-slash"></i>'
-        } else {
-          doc.setAttribute('show','false');
-          doc.innerHTML = '<i class="fa fa-eye"></i>'
-        }
-
-        this.SelectAnnotation(annotationId);
-
-      }
-
-      deleteNoteItem(themeId,annotationId,item) {
-
-        var notes = this.model;
-
-        if(item == null && annotationId != null) {
-          this.SelectAnnotation(annotationId);
-        } else if(annotationId == null) {
-          this.SeeAnnotation(themeId,"item");
-        }
-  
+      $scope.deleteNote = (theme,note = null) => {
+        console.log(note);
         var dialog = $mdDialog.confirm()
               .ok("Delete !")
               .title('Do you want to remove it?')
@@ -805,117 +310,178 @@ angular.module('app.spinalforge.plugin').run(["spinalModelDictionary", "$mdDialo
         
               $mdDialog.show(dialog)
               .then((result) => {
-                var themeIndex,annotationIndex;
+                
+                if(note != null) {
+                  for (var i = 0; i < $scope.themeListModel.length; i++) {
+                    var themeS = $scope.themeListModel[i];
+                    if(themeS._server_id == theme._server_id) {
+                      for (var j = 0; j < themeS.listModel.length; j++) {
+                        var annotation = themeS.listModel[j];
 
-                for (let i = 0; i < notes.length; i++) {
-                  if(notes[i].id == themeId) {
-                    themeIndex = i;
-                    for(var j = 0; j < notes[i].listModel.length; j++){
-                      if(notes[i].listModel[j].id == annotationId) {
-                        annotationIndex = j;
-                        break;
-                      }  
+                        if(annotation._server_id == note._server_id) {
+                          $scope.themeListModel[i].listModel.splice(j,1);
+                          break;
+                        }
+                      }
+                      break;
                     }
-                    break;
-                  }
-                    
-                }
-
-                if(item != null) {
-                  for (let index = 0; index < notes[themeIndex].listModel[annotationIndex].allObject.length; index++) {
-                    const element = notes[themeIndex].listModel[annotationIndex].allObject[index]
-                    if(element.dbId == item) {
-                      notes[themeIndex].listModel[annotationIndex].allObject.splice(index,1);
-                      break;
-                    } 
-                  }
-                } else if(item == null && annotationId != null) {
-                  notes[themeIndex].listModel.splice(annotationIndex,1);
-                } else {
-                  notes.splice(themeIndex,1);
-                }
-  
-              }, function(){});
-  
-      }
-
-      renameNote(themeId,annotationId) {
-        var notes = this.model;
-        
-        if(annotationId != null) {
-          this.SelectAnnotation(annotationId);
-        } else {
-          this.SeeAnnotation(themeId,"theme");
-        }
-
-        var confirm = $mdDialog.prompt()
-              .title('Rename Note')
-              .placeholder('Please enter the title')
-              .ariaLabel('Rename')
-              .clickOutsideToClose(true)
-              .required(true)
-              .ok('Rename')
-              .cancel('Cancel');
-
-              $mdDialog.show(confirm).then((result) => {
-                var themeIndex;
-
-                for (let i = 0; i < notes.length; i++) {
-                  if(notes[i].id == themeId) {
-                      themeIndex = i;
-                      break;
-                  } 
-                }
-
-                if(annotationId != null) {
-                  for (let j = 0; j < notes[themeIndex].listModel.length; j++) {
-                    const element = notes[themeIndex].listModel[j];
-                    if(element.id == annotationId) {
-                      notes[themeIndex].listModel[j].title.set(result);
-                      break;
-                    }   
                   }
                 } else {
-                  notes[themeIndex].name.set(result);
+                  for (var i = 0; i < $scope.themeListModel.length; i++) {
+                    var themeS = $scope.themeListModel[i];
+                    if(themeS._server_id == theme._server_id) {
+                      $scope.themeListModel.splice(i,1);
+                      break;
+                    }
+                  }
                 }
 
-              }, function () {});
-      }
 
-      viewOrHide(themeId, annotationId) {
-
-        var element = document.getElementsByClassName("show" + annotationId)[0];
-        var show = element.getAttribute("show");
+                
+              }, () => {})
+      };
   
-        if(show == "false") {
-          element.setAttribute("show","true");
-          this.changeItemColor(themeId, annotationId);
-          element.innerHTML = '<i class="fa fa-eye-slash" aria-hidden="true"></i>';
-        } else {
-          element.setAttribute("show","false");
-          this.restoreColor(themeId, annotationId);
-          element.innerHTML = '<i class="fa fa-eye" aria-hidden="true"></i>';
-          
+
+      $scope.addItemInNote = (annotation) => {
+
+        var items = viewer.getSelection();
+
+        if (items.length == 0) {
+          alert('No model selected !');
+          return;
         }
+
+        viewer.model.getBulkProperties(items, {
+          propFilter: ['name']
+        }, (models) => {
+
+          let mod = FileSystem._objects[annotation._server_id];
+
+          if(mod) {
+            for (var i = 0; i < models.length; i++) { 
+                mod.allObject.push(models[i]);
+            }
+
+            var toast = $mdToast.simple()
+          .content("Item added !")
+          .action('OK')
+          .highlightAction(true)
+          .hideDelay(0)
+          .position('bottom right')
+          .parent("body");
   
-      }
+          $mdToast.show(toast);
+            
+          }
 
-      //------------------------------------------------------ Pannel Message -------------------------------------
-      viewMessagePanel(themeId,annotationId) {
-        this.SelectAnnotation(annotationId);
-        this.messagePanel.DetailPanel(themeId,annotationId);
-      }
+        })
 
-      //----------------------------------------------------- -- Panel File ---------------------------------------
-      viewFilePanel(themeId,annotationId) {
-        this.SelectAnnotation(annotationId);
-        this.filePanel.DisplayFilePanel(themeId,annotationId);
       }
 
 
+      $scope.changeItemColor = (theme) => {
+        var ids = [];
+        // var selected;
+        // var notes = this.model;
+        // for (var i = 0; i < notes.length; i++) {
+        //   if (notes[i].id == id) {
+        //     selected = notes[i];
+        //     for (var j = 0; j < selected.allObject.length; j++) {
 
-    } // end class
-    
-  Autodesk.Viewing.theExtensionManager.registerExtension('PannelAnnotation', PannelAnnotation);
-  } // end run
-]);
+        //       ids.push(selected.allObject[j].dbId.get());
+        //     }
+        //   }
+        // }
+
+        let mod = FileSystem._objects[theme._server_id];
+
+        if(mod) {
+          for (var i = 0; i < mod.allObject.length; i++) {
+            ids.push(mod.allObject[i]);
+          }
+
+          if(mod.display == false)
+            mod.display.set(true);
+
+          console.log("ids",ids);
+          console.log("mod.color",mod.color);
+          console.log("mod._server_id",mod._server_id);
+
+          viewer.setColorMaterial(ids, mod.color, mod._server_id);
+        }
+      }
+
+
+      $scope.restoreColor = (theme) => {
+        var ids = [];
+        // var selected;
+        // var notes = this.model;
+        // for (var i = 0; i < notes.length; i++) {
+        //   if (notes[i].id == id) {
+        //     selected = notes[i];
+        //     for (var j = 0; j < selected.allObject.length; j++) {
+        //       ids.push(selected.allObject[j].dbId.get());
+        //     }
+        //   }
+        // }
+
+        let mod = FileSystem._objects[theme._server_id];
+
+        if(mod) {
+          for (var i = 0; i < mod.allObject.length; i++) {
+            ids.push(mod.allObject[i]);
+          }
+
+          if(mod.display == true)
+            mod.display.set(false);
+
+          viewer.restoreColorMaterial(ids, mod._server_id);
+        }
+
+      }
+
+
+      $scope.chatNote = (theme) => {
+
+      };
+
+      
+
+      // changeAllItemsColor() {
+      //   var objects = [];
+      //   var notes = this.model;
+      //   for (var i = 0; i < notes.length; i++) {
+      //     var ids = [];
+      //     var color;
+      //     for (var j = 0; j < notes[i].allObject.length; j++) {
+      //       ids.push(notes[i].allObject[j].dbId.get());
+      //     }
+      //     color = notes[i].color.get();
+      //     objects.push({
+      //       ids: ids,
+      //       color: color,
+      //       id: notes[i].id
+      //     });
+      //   }
+      //   this.viewer.colorAllMaterials(objects);
+      // }
+
+      // restoreAllItemsColor() {
+      //   var objects = [];
+      //   var notes = this.model;
+      //   for (var i = 0; i < notes.length; i++) {
+      //     var ids = [];
+
+      //     for (var j = 0; j < notes[i].allObject.length; j++) {
+      //       ids.push(notes[i].allObject[j].dbId.get());
+      //     }
+      //     objects.push({
+      //       ids: ids,
+      //       id: notes[i].id
+      //     });
+      //   }
+      //   this.viewer.restoreAllMaterialColor(objects);
+      // }
+
+    }
+  ]);
