@@ -1,4 +1,3 @@
-import { ThemeModel } from "../../../spinal-lib-forgefile/forgefile";
 
 let appSpinalforgePlugin = angular.module('app.spinalforge.plugin');
 appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "spinalRegisterViewerPlugin",
@@ -16,11 +15,29 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       let toload = [{
         uri: 'app/templates/annotationTemplate.html',
         name: 'annotationTemplate.html'
+      },{
+        uri: 'app/templates/commentTemplate.html',
+        name: 'commentTemplate.html'
       }];
       for (var i = 0; i < toload.length; i++) {
         load_template(toload[i].uri, toload[i].name);
       }
 
+      // window.CommentPanel = class CommentPanel {
+      //   constructor() {
+      //               this.panel = new PanelClass(this.viewer, title);
+      //               var _container = document.createElement('div');
+      //               _container.style.height = "calc(100% - 45px)";
+      //               _container.style.overflowY = 'auto';
+      //               this.panel.container.appendChild(_container);
+          
+      //               $(_container).html("<div ng-controller=\"commentCtrl\" ng-cloak>" +
+      //                 $templateCache.get("commentTemplate.html") + "</div>");
+      //               $compile($(_container).contents())($rootScope);
+          
+          
+      //   }
+      // }
 
       class PannelAnnotation {
         constructor(viewer, options) {
@@ -78,6 +95,8 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
         }
 
         initialize() {
+          // new CommentPanel()
+
           var _container = document.createElement('div');
           _container.style.height = "calc(100% - 45px)";
           _container.style.overflowY = 'auto';
@@ -95,8 +114,8 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
   //---------------------------------------------------------------------------------------------------------
 
 
-  .controller('annotationCtrl', ["$scope", "$rootScope", "$mdToast", "$mdDialog", "authService", "$compile", "$injector", "layout_uid", "spinalModelDictionary", "$q",
-    function ($scope, $rootScope, $mdToast, $mdDialog, authService, $compile, $injector, layout_uid, spinalModelDictionary, $q) {
+  .controller('annotationCtrl', ["$scope", "$rootScope", "$mdToast", "$mdDialog", "authService", "$compile", "$injector", "layout_uid", "spinalModelDictionary", "$q","messagePanelService", "FilePanelService",
+    function ($scope, $rootScope, $mdToast, $mdDialog, authService, $compile, $injector, layout_uid, spinalModelDictionary, $q,messagePanelService,FilePanelService) {
       var viewer = v;
       $scope.user = authService.get_user();
       $scope.headerBtnClick = (btn) => {
@@ -181,7 +200,10 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
             // chcck if aplly color
           }
 
+          // messagePanelService.
+
         });
+
       };
 
 
@@ -264,7 +286,15 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       };
 
       $scope.ViewAllNotes = (theme) => {
-        theme.view = !theme.view;
+
+        if(theme.display) {
+          $scope.restoreColor(theme);
+        } else {
+          $scope.changeItemColor(theme);
+        }
+
+        // theme.display = !theme.display;
+
       };
 
       $scope.addNoteInTheme = (theme) => {
@@ -280,7 +310,7 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
           .then(function (result) {
             let mod = FileSystem._objects[theme._server_id];
 
-            
+
             var annotation = new NoteModel();
 
             annotation.title.set(result);
@@ -400,14 +430,11 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
             ids.push(mod.allObject[i]);
           }
 
-          if(mod.display == false)
-            mod.display.set(true);
+          mod.display.set(true);
 
-          console.log("ids",ids);
-          console.log("mod.color",mod.color);
-          console.log("mod._server_id",mod._server_id);
+          console.log(mod.color);
 
-          viewer.setColorMaterial(ids, mod.color, mod._server_id);
+          viewer.setColorMaterial(ids, theme.color, mod._server_id);
         }
       }
 
@@ -432,8 +459,7 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
             ids.push(mod.allObject[i]);
           }
 
-          if(mod.display == true)
-            mod.display.set(false);
+          mod.display.set(false);
 
           viewer.restoreColorMaterial(ids, mod._server_id);
         }
@@ -441,9 +467,13 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       }
 
 
-      $scope.chatNote = (theme) => {
-
+      $scope.commentNote = (theme) => {
+        messagePanelService.hideShowPanel(theme);
       };
+
+      $scope.sendFile = (theme) => {
+        FilePanelService.hideShowPanel(theme);
+      }
 
       
 

@@ -10,6 +10,8 @@ SRC= app/app.js \
   app/services/spinalModelDictionary.js \
   app/services/goldenLayoutService.js \
   app/services/authService.js \
+  app/services/messagePanelService.js \
+  app/services/filePanelService.js \
   app/controllers/mainCtrl.js \
   app/controllers/navbarCtrl.js \
   app/controllers/forgeViewerCtrl.js \

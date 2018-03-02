@@ -130,7 +130,7 @@ function ($mdDialog,$mdToast, $rootScope,$compile) {
                     evt.preventDefault();
                 }
 
-                file_container.htmlFor = "modal-new-dropzone-input"
+                file_container.htmlFor = ""
 
 
                 dragDrop.appendChild(input);
