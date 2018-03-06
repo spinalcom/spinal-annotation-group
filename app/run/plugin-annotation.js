@@ -179,7 +179,6 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       };
 
       $scope.onModelChange = () => {
-        $scope.themes = [];
         let promiseLst = [];
         for (var i = 0; i < $scope.themeListModel.length; i++) {
           let note = $scope.themeListModel[i];
