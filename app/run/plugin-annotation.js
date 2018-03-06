@@ -162,7 +162,6 @@ appSpinalforgePlugin.run(["$rootScope", "$compile", "$templateCache", "$http", "
       });
 
       function deferObjRdy(model, promise) {
-        console.log(model, model._server_id);
         if (!model._server_id || FileSystem._tmp_objects[model._server_id]) {
           setTimeout(() => {
             deferObjRdy(model, promise);
